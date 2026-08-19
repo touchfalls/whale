@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="website for links">
+    <title>touchfalls</title>
+
+    <!-- Favicon в виде терминала -->
+    <link rel="icon" type="image/png" href="./favicon.png">
+    <link rel="apple-touch-icon" href="./favicon.png">
+
+    <!-- Предыдущие шрифты (закомментированы): JetBrains Mono и Inter -->
+    <!--
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    -->
+
+    <!-- Шрифты в стиле Adobe (Adobe Source Sans 3, Source Code Pro, Plus Jakarta Sans) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Source+Code+Pro:wght@400;500;600;700&family=Source+Sans+3:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&display=swap"
+        rel="stylesheet">
+
+    <!-- Стили -->
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <!-- Фоновое изображение и затемняющий оверлей -->
+    <div class="bg-layer" id="bg-layer"></div>
+    <div class="bg-overlay"></div>
+
+    <!-- Основной контейнер приложения (SPA) -->
+    <div class="app-wrapper">
+        <main class="main-card" id="main-card">
+
+            <!-- ========================================== -->
+            <!-- ЭКРАН 1: ГЛАВНАЯ (HOME VIEW)               -->
+            <!-- ========================================== -->
+            <section class="view active" id="view-home" data-view="home">
+                <!-- <div class="terminal-header">
+                    <span class="prompt-symbol">></span> <span class="typed-title" id="home-title">welcome</span>
+                </div> -->
+                <div class="home-nav">
+                    <button class="nav-action-btn" data-target="links" id="btn-to-links">[links]</button>
+                    <button class="nav-action-btn" data-target="server" id="btn-to-server">[server]</button>
+                    <button class="nav-action-btn" data-target="proj" id="btn-to-proj">[proj]</button>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- ЭКРАН 2: LINKS (SOCIALS & CONTACTS)        -->
+            <!-- ========================================== -->
+            <section class="view" id="view-links" data-view="links">
+                <div class="view-header">
+                    <button class="back-btn" data-target="home" aria-label="Вернуться назад">[ &larr; back ]</button>
+                    <h2 class="view-title">socials & contacts</h2>
+                </div>
+                <!-- Список ссылок генерируется скриптом app.js из объекта CONFIG -->
+                <div class="links-list" id="links-container"></div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- ЭКРАН 3: SERVER (MINECRAFT STATUS)         -->
+            <!-- ========================================== -->
+            <section class="view" id="view-server" data-view="server">
+                <div class="view-header">
+                    <button class="back-btn" data-target="home" aria-label="Вернуться назад">[ &larr; back ]</button>
+                    <h2 class="view-title">private minecraft server for friends and friends of their friends</h2>
+                </div>
+
+                <!-- Строгий текстовый минимализм без эмодзи -->
+                <div class="server-box">
+                    <!-- <div class="server-raw-line">
+                        <span class="label">host:</span> <span class="val" id="mc-host-display">...</span>
+                    </div> -->
+                    <div class="server-raw-line status-line">
+                        <span class="label">status:</span>
+                        <span id="mc-status" class="status-badge status-checking">[checking...]</span>
+                    </div>
+                </div>
+
+                <div class="whitelist-box">
+                    <p class="whitelist-desc">whitelist application:</p>
+                    <a href="#" id="whitelist-tg-link" class="whitelist-action-link" target="_blank"
+                        rel="noopener noreferrer">
+                        [ apply via telegram ]
+                    </a>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- ЭКРАН 4: PROJ (MODRINTH PROJECTS)          -->
+            <!-- ========================================== -->
+            <section class="view" id="view-proj" data-view="proj">
+                <div class="view-header">
+                    <button class="back-btn" data-target="home" aria-label="Вернуться назад">[ &larr; back ]</button>
+                    <h2 class="view-title">modrinth projects</h2>
+                </div>
+
+                <!-- Контейнер для карточек проектов Modrinth -->
+                <div class="projects-container" id="projects-container">
+                    <div class="state-indicator" id="projects-loading">[loading projects...]</div>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Скрипт SPA -->
+    <script src="./app.js"></script>
+</body>
+
+</html>
