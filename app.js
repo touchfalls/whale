@@ -11,7 +11,7 @@ const CONFIG = {
 
     // IP адрес Minecraft-сервера для экрана [server]
     // Сюда впишите ваш реальный адрес сервера (например: 'mc.hypixel.net' или 'play.myserver.ru')
-    minecraftServerIP: "mc.hypixel.net",
+    minecraftServerIP: "play.margoles.xyz",
 
     // Ссылка на Telegram для подачи заявки на вайтлист
     whitelistTelegramUrl: "https://t.me/zqape",
