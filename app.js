@@ -23,7 +23,7 @@ const CONFIG = {
     // Отдельная страница модпака и источник его версий/changelog
     modrinthPackSlug: "ses-pack",
     modrinthPackUrl: "https://modrinth.com/modpack/ses-pack",
-    mrpackConverterUrl: "https://fabulously-optimized.github.io/mrpack-to-zip/",
+    mrpackConverterUrl: "https://mctoolbox.net/mrpack-to-zip",
 
     // Список ссылок для экрана [links]
     // КАК ДОБАВЛЯТЬ ИКОНКИ ПО ПУТИ К ФАЙЛУ:
