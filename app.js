@@ -20,6 +20,11 @@ const CONFIG = {
     // Сюда впишите ваш логин на Modrinth (например: 'jellysquid3' или 'Iris-Dimension')
     modrinthUsername: "touchfalls",
 
+    // Отдельная страница модпака и источник его версий/changelog
+    modrinthPackSlug: "ses-pack",
+    modrinthPackUrl: "https://modrinth.com/modpack/ses-pack",
+    mrpackConverterUrl: "https://fabulously-optimized.github.io/mrpack-to-zip/",
+
     // Список ссылок для экрана [links]
     // КАК ДОБАВЛЯТЬ ИКОНКИ ПО ПУТИ К ФАЙЛУ:
     // Вы можете указать:
@@ -80,7 +85,7 @@ const CONFIG = {
  */
 
 // Список доступных экранов
-const VALID_VIEWS = ["home", "links", "server", "proj"];
+const VALID_VIEWS = ["home", "links", "server", "proj", "ses-pack"];
 
 // Переключение экранов
 function navigateTo(targetView) {
@@ -110,7 +115,7 @@ function renderView(viewName) {
     }
 
     // Расширяем карточку для экрана проектов для удобного отображения
-    if (viewName === "proj") {
+    if (viewName === "proj" || viewName === "ses-pack") {
         mainCard.classList.add("wide-card");
     } else {
         mainCard.classList.remove("wide-card");
@@ -147,11 +152,20 @@ document.addEventListener("DOMContentLoaded", () => {
     const whitelistEl = document.getElementById("whitelist-tg-link");
     if (whitelistEl) whitelistEl.href = CONFIG.whitelistTelegramUrl;
 
+    const packLinkEl = document.getElementById("pack-modrinth-link");
+    if (packLinkEl) packLinkEl.href = CONFIG.modrinthPackUrl;
+
+    const converterLinkEl = document.getElementById("pack-converter-link");
+    if (converterLinkEl) converterLinkEl.href = CONFIG.mrpackConverterUrl;
+
     // 3. Генерация плашек на экране [links]
     renderLinksList();
 
     // 4. Привязка обработчиков клика для навигации
     setupNavigationListeners();
+
+    // Changelog запрашивается только после явного нажатия на кнопку
+    setupPackChangelog();
 
     // 5. Обработка начального маршрута
     window.addEventListener("hashchange", handleHashChange);
@@ -388,4 +402,312 @@ function formatDownloadsCount(count) {
         return (count / 1000).toFixed(1).replace(/\.0$/, "") + "k";
     }
     return count.toLocaleString();
+}
+
+/**
+ * ============================================================================
+ * 7. ЭКРАН [se's pack]: ЛЕНИВАЯ ЗАГРУЗКА CHANGELOG С MODRINTH
+ * ============================================================================
+ */
+let isPackChangelogLoaded = false;
+let isPackChangelogLoading = false;
+
+function setupPackChangelog() {
+    const toggle = document.getElementById("pack-changelog-toggle");
+    const panel = document.getElementById("pack-changelog-panel");
+    if (!toggle || !panel) return;
+
+    toggle.addEventListener("click", () => {
+        const shouldOpen = panel.hidden;
+        panel.hidden = !shouldOpen;
+        toggle.setAttribute("aria-expanded", String(shouldOpen));
+        toggle.textContent = shouldOpen ? "[ hide changelog ]" : "[ show changelog ]";
+
+        if (shouldOpen && !isPackChangelogLoaded && !isPackChangelogLoading) {
+            fetchPackChangelog();
+        }
+    });
+}
+
+async function fetchPackChangelog() {
+    const panel = document.getElementById("pack-changelog-panel");
+    if (!panel) return;
+
+    panel.innerHTML = `<div class="state-indicator">[loading changelog...]</div>`;
+    isPackChangelogLoading = true;
+
+    try {
+        const endpoint = `https://api.modrinth.com/v2/project/${encodeURIComponent(CONFIG.modrinthPackSlug)}/version?include_changelog=true`;
+        const response = await fetch(endpoint);
+
+        if (response.status === 404) {
+            renderPendingPackMessage(panel);
+            return;
+        }
+
+        if (!response.ok) {
+            throw new Error(`Modrinth API responded with status ${response.status}`);
+        }
+
+        const versions = await response.json();
+        renderPackVersions(panel, versions);
+        isPackChangelogLoaded = true;
+    } catch (error) {
+        console.error("Modrinth Pack Changelog API error:", error);
+        panel.innerHTML = "";
+
+        const errorBox = document.createElement("div");
+        errorBox.className = "changelog-empty state-error";
+        errorBox.textContent = "[error loading changelog — try again]";
+        panel.appendChild(errorBox);
+    } finally {
+        isPackChangelogLoading = false;
+    }
+}
+
+function renderPendingPackMessage(panel) {
+    panel.innerHTML = "";
+
+    const message = document.createElement("div");
+    message.className = "changelog-empty";
+
+    const title = document.createElement("strong");
+    title.textContent = "[changelog is not public yet]";
+
+    const description = document.createElement("p");
+    description.textContent = "Modrinth will make it available here automatically after the project is approved and its versions are public.";
+
+    message.append(title, description);
+    panel.appendChild(message);
+}
+
+function renderPackVersions(panel, versions) {
+    panel.innerHTML = "";
+
+    if (!Array.isArray(versions) || versions.length === 0) {
+        const empty = document.createElement("div");
+        empty.className = "changelog-empty";
+        empty.textContent = "[no public versions yet]";
+        panel.appendChild(empty);
+        return;
+    }
+
+    const sortedVersions = [...versions].sort((a, b) => {
+        return new Date(b.date_published || 0) - new Date(a.date_published || 0);
+    });
+
+    sortedVersions.forEach(version => {
+        panel.appendChild(createVersionChangelog(version));
+    });
+}
+
+function createVersionChangelog(version) {
+    const article = document.createElement("article");
+    article.className = "changelog-version";
+
+    const header = document.createElement("div");
+    header.className = "changelog-version-header";
+
+    const headingGroup = document.createElement("div");
+    headingGroup.className = "changelog-heading-group";
+
+    const heading = document.createElement("h3");
+    heading.className = "changelog-version-title";
+    heading.textContent = version.name || version.version_number || "Untitled version";
+
+    const number = document.createElement("span");
+    number.className = "changelog-version-number";
+    number.textContent = version.version_number || "";
+
+    const badge = document.createElement("span");
+    const versionType = version.version_type || "release";
+    badge.className = `version-type version-type-${versionType}`;
+    badge.textContent = versionType;
+
+    headingGroup.append(heading);
+    if (version.version_number && version.version_number !== version.name) {
+        headingGroup.append(number);
+    }
+    header.append(headingGroup, badge);
+
+    const meta = document.createElement("div");
+    meta.className = "changelog-meta";
+
+    if (version.date_published) {
+        const date = document.createElement("span");
+        date.textContent = formatModrinthDate(version.date_published);
+        meta.appendChild(date);
+    }
+
+    const compatibility = [...(version.game_versions || []), ...(version.loaders || [])];
+    compatibility.forEach(item => {
+        const tag = document.createElement("span");
+        tag.className = "changelog-tag";
+        tag.textContent = item;
+        meta.appendChild(tag);
+    });
+
+    const body = document.createElement("div");
+    body.className = "changelog-body";
+    body.appendChild(renderSafeMarkdown(version.changelog));
+
+    article.append(header, meta, body);
+    return article;
+}
+
+function formatModrinthDate(dateValue) {
+    const date = new Date(dateValue);
+    if (Number.isNaN(date.getTime())) return "";
+
+    return new Intl.DateTimeFormat("en", {
+        year: "numeric",
+        month: "short",
+        day: "numeric"
+    }).format(date);
+}
+
+/**
+ * Небольшой безопасный Markdown-рендерер для текста changelog.
+ * Поддерживает заголовки, списки, цитаты, блоки кода, ссылки и выделение,
+ * при этом никогда не вставляет HTML из ответа API напрямую.
+ */
+function renderSafeMarkdown(markdown) {
+    const fragment = document.createDocumentFragment();
+    const lines = String(markdown || "").replace(/\r\n?/g, "\n").split("\n");
+    let paragraphLines = [];
+    let currentList = null;
+    let codeBlock = null;
+
+    const flushParagraph = () => {
+        if (paragraphLines.length === 0) return;
+        const paragraph = document.createElement("p");
+        appendInlineMarkdown(paragraph, paragraphLines.join(" "));
+        fragment.appendChild(paragraph);
+        paragraphLines = [];
+    };
+
+    const closeList = () => {
+        currentList = null;
+    };
+
+    lines.forEach(line => {
+        const fenceMatch = line.match(/^```\s*([\w+-]*)\s*$/);
+        if (fenceMatch) {
+            flushParagraph();
+            closeList();
+
+            if (codeBlock) {
+                fragment.appendChild(codeBlock);
+                codeBlock = null;
+            } else {
+                const pre = document.createElement("pre");
+                codeBlock = pre;
+                if (fenceMatch[1]) pre.dataset.language = fenceMatch[1];
+            }
+            return;
+        }
+
+        if (codeBlock) {
+            codeBlock.textContent += `${codeBlock.textContent ? "\n" : ""}${line}`;
+            return;
+        }
+
+        if (!line.trim()) {
+            flushParagraph();
+            closeList();
+            return;
+        }
+
+        const headingMatch = line.match(/^(#{1,4})\s+(.+)$/);
+        if (headingMatch) {
+            flushParagraph();
+            closeList();
+            const headingLevel = Math.min(headingMatch[1].length + 2, 6);
+            const heading = document.createElement(`h${headingLevel}`);
+            appendInlineMarkdown(heading, headingMatch[2]);
+            fragment.appendChild(heading);
+            return;
+        }
+
+        if (/^\s*([-*_])(?:\s*\1){2,}\s*$/.test(line)) {
+            flushParagraph();
+            closeList();
+            fragment.appendChild(document.createElement("hr"));
+            return;
+        }
+
+        const listMatch = line.match(/^\s*(?:([-+*])|(\d+)\.)\s+(.+)$/);
+        if (listMatch) {
+            flushParagraph();
+            const listType = listMatch[2] ? "ol" : "ul";
+
+            if (!currentList || currentList.tagName.toLowerCase() !== listType) {
+                currentList = document.createElement(listType);
+                fragment.appendChild(currentList);
+            }
+
+            const item = document.createElement("li");
+            appendInlineMarkdown(item, listMatch[3]);
+            currentList.appendChild(item);
+            return;
+        }
+
+        const quoteMatch = line.match(/^>\s?(.*)$/);
+        if (quoteMatch) {
+            flushParagraph();
+            closeList();
+            const quote = document.createElement("blockquote");
+            appendInlineMarkdown(quote, quoteMatch[1]);
+            fragment.appendChild(quote);
+            return;
+        }
+
+        closeList();
+        paragraphLines.push(line.trim());
+    });
+
+    flushParagraph();
+    if (codeBlock) fragment.appendChild(codeBlock);
+
+    if (!fragment.hasChildNodes()) {
+        const empty = document.createElement("p");
+        empty.className = "changelog-no-notes";
+        empty.textContent = "No changelog was provided for this version.";
+        fragment.appendChild(empty);
+    }
+
+    return fragment;
+}
+
+function appendInlineMarkdown(parent, text) {
+    const tokenPattern = /(\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|__([^_]+)__|\*([^*]+)\*|_([^_]+)_)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = tokenPattern.exec(text)) !== null) {
+        parent.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+        let element;
+
+        if (match[2] && match[3]) {
+            element = document.createElement("a");
+            element.href = match[3];
+            element.target = "_blank";
+            element.rel = "noopener noreferrer";
+            element.textContent = match[2];
+        } else if (match[4]) {
+            element = document.createElement("code");
+            element.textContent = match[4];
+        } else if (match[5] || match[6]) {
+            element = document.createElement("strong");
+            element.textContent = match[5] || match[6];
+        } else {
+            element = document.createElement("em");
+            element.textContent = match[7] || match[8];
+        }
+
+        parent.appendChild(element);
+        lastIndex = tokenPattern.lastIndex;
+    }
+
+    parent.appendChild(document.createTextNode(text.slice(lastIndex)));
 }

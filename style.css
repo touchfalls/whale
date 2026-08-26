@@ -166,7 +166,10 @@ button {
 .view.active .link-card,
 .view.active .server-box,
 .view.active .whitelist-box,
-.view.active .project-item {
+.view.active .project-item,
+.view.active .pack-modrinth-link,
+.view.active .pack-tool-link,
+.view.active .changelog-toggle {
     animation: itemSlideIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
@@ -174,6 +177,7 @@ button {
 .view.active .nav-action-btn:nth-child(1) { animation-delay: 0.04s; }
 .view.active .nav-action-btn:nth-child(2) { animation-delay: 0.09s; }
 .view.active .nav-action-btn:nth-child(3) { animation-delay: 0.14s; }
+.view.active .nav-action-btn:nth-child(4) { animation-delay: 0.19s; }
 
 /* Задержки для плашек ссылок */
 .view.active .link-card:nth-child(1) { animation-delay: 0.03s; }
@@ -607,7 +611,323 @@ button {
 }
 
 /* ==========================================================================
-   11. АДАПТИВНОСТЬ (MOBILE & DESKTOP)
+   11. ЭКРАН 5: SE'S PACK И CHANGELOG В СТИЛЕ MODRINTH
+   ========================================================================== */
+.pack-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.pack-modrinth-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.1rem 1.2rem;
+    background: rgba(27, 217, 106, 0.045);
+    border: 1px solid rgba(27, 217, 106, 0.2);
+    border-radius: 8px;
+    transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+}
+
+.pack-modrinth-link:hover {
+    background: rgba(27, 217, 106, 0.09);
+    border-color: #1bd96a;
+    transform: translateY(-2px);
+}
+
+.pack-link-title,
+.pack-link-subtitle {
+    display: block;
+}
+
+.pack-link-title {
+    margin-bottom: 0.18rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.pack-link-subtitle {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+}
+
+.pack-link-action {
+    color: #1bd96a;
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.pack-tool-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1.1rem;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--card-border);
+    border-radius: 8px;
+    transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+}
+
+.pack-tool-link:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: var(--card-border-hover);
+    transform: translateY(-2px);
+}
+
+.pack-tool-title,
+.pack-tool-description {
+    display: block;
+}
+
+.pack-tool-title {
+    margin-bottom: 0.18rem;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.pack-tool-description {
+    color: var(--text-muted);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+}
+
+.pack-tool-action {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    white-space: nowrap;
+    transition: color var(--transition-fast);
+}
+
+.pack-tool-link:hover .pack-tool-action {
+    color: var(--text-primary);
+}
+
+.changelog-toggle {
+    width: 100%;
+    padding: 0.82rem 1rem;
+    border: 1px solid var(--card-border);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.025);
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.changelog-toggle:hover,
+.changelog-toggle[aria-expanded="true"] {
+    color: var(--text-primary);
+    border-color: var(--card-border-hover);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.changelog-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    max-height: 52vh;
+    overflow-y: auto;
+    padding-right: 0.35rem;
+}
+
+.changelog-panel[hidden] {
+    display: none;
+}
+
+.changelog-panel::-webkit-scrollbar {
+    width: 5px;
+}
+
+.changelog-panel::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 4px;
+}
+
+.changelog-panel::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+}
+
+.changelog-version {
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid var(--card-border);
+    border-radius: 9px;
+}
+
+.changelog-version-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem 0.7rem;
+}
+
+.changelog-heading-group {
+    min-width: 0;
+}
+
+.changelog-version-title {
+    color: var(--text-primary);
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1.3;
+}
+
+.changelog-version-number {
+    display: block;
+    margin-top: 0.12rem;
+    color: var(--text-dim);
+    font-size: 0.78rem;
+}
+
+.version-type {
+    flex-shrink: 0;
+    padding: 0.18rem 0.48rem;
+    border-radius: 999px;
+    font-family: var(--font-sans);
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.version-type-release {
+    color: #56e58f;
+    background: rgba(27, 217, 106, 0.12);
+}
+
+.version-type-beta {
+    color: #f5c451;
+    background: rgba(245, 196, 81, 0.12);
+}
+
+.version-type-alpha {
+    color: #ff7770;
+    background: rgba(255, 59, 48, 0.12);
+}
+
+.changelog-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.42rem;
+    padding: 0 1.1rem 0.9rem;
+    color: var(--text-dim);
+    font-family: var(--font-sans);
+    font-size: 0.76rem;
+}
+
+.changelog-tag {
+    padding: 0.1rem 0.38rem;
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.025);
+}
+
+.changelog-body {
+    padding: 1rem 1.1rem 1.1rem;
+    border-top: 1px solid var(--card-border);
+    color: #c6cad3;
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.changelog-body > * + * {
+    margin-top: 0.75rem;
+}
+
+.changelog-body h3,
+.changelog-body h4,
+.changelog-body h5,
+.changelog-body h6 {
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.95rem;
+}
+
+.changelog-body ul,
+.changelog-body ol {
+    padding-left: 1.35rem;
+}
+
+.changelog-body li + li {
+    margin-top: 0.25rem;
+}
+
+.changelog-body a {
+    color: #1bd96a;
+    text-decoration: underline;
+    text-underline-offset: 0.16em;
+}
+
+.changelog-body code {
+    padding: 0.12rem 0.32rem;
+    border: 1px solid var(--card-border);
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.3);
+    color: #e4e7ec;
+    font-family: var(--font-mono);
+    font-size: 0.84em;
+}
+
+.changelog-body pre {
+    overflow-x: auto;
+    padding: 0.8rem;
+    border: 1px solid var(--card-border);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.35);
+    color: #e4e7ec;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    white-space: pre;
+}
+
+.changelog-body blockquote {
+    padding-left: 0.85rem;
+    border-left: 3px solid rgba(27, 217, 106, 0.45);
+    color: var(--text-muted);
+}
+
+.changelog-body hr {
+    border: 0;
+    border-top: 1px solid var(--card-border);
+}
+
+.changelog-no-notes {
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.changelog-empty {
+    padding: 1.4rem 1rem;
+    border: 1px dashed var(--card-border);
+    border-radius: 8px;
+    color: var(--text-muted);
+    text-align: center;
+    font-size: 0.88rem;
+}
+
+.changelog-empty strong {
+    display: block;
+    margin-bottom: 0.45rem;
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+.changelog-empty p {
+    font-family: var(--font-sans);
+    line-height: 1.45;
+}
+
+/* ==========================================================================
+   12. АДАПТИВНОСТЬ (MOBILE & DESKTOP)
    ========================================================================== */
 @media (max-width: 600px) {
     .app-wrapper {
@@ -626,5 +946,19 @@ button {
 
     .project-item {
         padding: 0.95rem;
+    }
+
+    .pack-modrinth-link {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pack-tool-link {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .pack-link-subtitle {
+        overflow-wrap: anywhere;
     }
 }

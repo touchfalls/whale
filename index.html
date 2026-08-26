@@ -51,6 +51,7 @@
                     <button class="nav-action-btn" data-target="links" id="btn-to-links">[links]</button>
                     <button class="nav-action-btn" data-target="server" id="btn-to-server">[server]</button>
                     <button class="nav-action-btn" data-target="proj" id="btn-to-proj">[proj]</button>
+                    <button class="nav-action-btn" data-target="ses-pack" id="btn-to-ses-pack">[se's pack]</button>
                 </div>
             </section>
 
@@ -107,6 +108,46 @@
                 <!-- Контейнер для карточек проектов Modrinth -->
                 <div class="projects-container" id="projects-container">
                     <div class="state-indicator" id="projects-loading">[loading projects...]</div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- ЭКРАН 5: SE'S PACK                         -->
+            <!-- ========================================== -->
+            <section class="view" id="view-ses-pack" data-view="ses-pack">
+                <div class="view-header">
+                    <button class="back-btn" data-target="home" aria-label="Вернуться назад">[ &larr; back ]</button>
+                    <h2 class="view-title">se's pack</h2>
+                </div>
+
+                <div class="pack-content">
+                    <a class="pack-modrinth-link" id="pack-modrinth-link"
+                        href="https://modrinth.com/modpack/ses-pack" target="_blank" rel="noopener noreferrer">
+                        <span>
+                            <span class="pack-link-title">se's pack</span>
+                            <span class="pack-link-subtitle">modrinth.com/modpack/ses-pack</span>
+                        </span>
+                        <span class="pack-link-action">[ open on modrinth ↗ ]</span>
+                    </a>
+
+                    <a class="pack-tool-link" id="pack-converter-link"
+                        href="https://fabulously-optimized.github.io/mrpack-to-zip/" target="_blank"
+                        rel="noopener noreferrer">
+                        <span>
+                            <span class="pack-tool-title">mrpack → zip converter</span>
+                            <span class="pack-tool-description">for manual installation into the Minecraft folder</span>
+                        </span>
+                        <span class="pack-tool-action">[ open converter ↗ ]</span>
+                    </a>
+
+                    <button class="changelog-toggle" id="pack-changelog-toggle" type="button"
+                        aria-expanded="false" aria-controls="pack-changelog-panel">
+                        [ show changelog ]
+                    </button>
+
+                    <div class="changelog-panel" id="pack-changelog-panel" hidden>
+                        <div class="state-indicator">[loading changelog...]</div>
+                    </div>
                 </div>
             </section>
 
