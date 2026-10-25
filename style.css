@@ -1,29 +1,35 @@
 /* ==========================================================================
-   1. ДИЗАЙН-СИСТЕМА, ПЕРЕМЕННЫЕ И ТОКЕНЫ
+   1. ДИЗАЙН-СИСТЕМА: ТОКЕНЫ (почти чёрный фон, окна, системные шрифты)
    ========================================================================== */
 :root {
-    /* Цветовая палитра */
-    --bg-dark: #090a0f;
-    --card-bg: rgba(13, 15, 22, 0.75);
-    --card-border: rgba(255, 255, 255, 0.08);
-    --card-border-hover: rgba(255, 255, 255, 0.22);
+    /* Фон и поверхности */
+    --bg: #020304;
+    --bg-2: #050709;
+    --bg-3: #08090c;
 
-    --text-primary: #ededed;
-    --text-muted: #8e95a5;
-    --text-dim: #5a6070;
+    /* Текст */
+    --ink: #e8eef5;
+    --ink-2: #a8b4c0;
+    --muted: #8b949e;
 
-    /* Цвета статусов */
-    --status-online: #00E054;
-    --status-offline: #FF3B30;
-    --status-checking: #FFCC00;
+    /* Акценты и статусы */
+    --accent: #4d9fff;
+    --good: #10d060;
+    --warn: #f0b020;
+    --bad: #f04040;
 
-    /* Шрифты в стиле рекламы Adobe (Adobe Source Sans 3 / Source Code Pro / Plus Jakarta Sans) */
-    --font-sans: 'Source Sans 3', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
-    --font-mono: 'Source Code Pro', 'JetBrains Mono', monospace;
+    /* Едва заметные рамки окон */
+    --edge-0: rgba(255, 255, 255, 0.04);
+    --edge-1: rgba(255, 255, 255, 0.07);
+    --edge-2: rgba(255, 255, 255, 0.12);
 
-    /* Анимации и переходы */
-    --transition-fast: 0.18s ease;
-    --transition-medium: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    --radius: 8px;
+    --left-col: 380px;
+
+    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+    --transition-fast: 0.15s ease;
 }
 
 /* ==========================================================================
@@ -37,11 +43,10 @@
 
 html,
 body {
-    width: 100%;
     min-height: 100%;
-    background-color: var(--bg-dark);
-    color: var(--text-primary);
-    font-family: var(--font-mono);
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
     font-size: 15px;
     line-height: 1.5;
     overflow-x: hidden;
@@ -50,7 +55,7 @@ body {
 }
 
 a {
-    color: inherit;
+    color: var(--accent);
     text-decoration: none;
 }
 
@@ -62,454 +67,380 @@ button {
     color: inherit;
 }
 
-/* ==========================================================================
-   3. ФОН И ТЕМНЫЙ ОВЕРЛЕЙ (ГДЕ ПОМЕНЯТЬ ФОНОВУЮ КАРТИНКУ)
-   ========================================================================== 
-   Чтобы установить своё изображение, замените URL внутри background-image ниже:
-*/
-.bg-layer {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background-image: url('https://images.unsplash.com/photo-1511497584788-87676104235f?auto=format&fit=crop&q=80&w=2400');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    z-index: -2;
-    transform: scale(1.03);
-    /* Предотвращает белые края при размытии */
-}
-
-.bg-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    background: rgba(4, 6, 10, 0.78);
-    /* Тёмный оверлей */
-    backdrop-filter: blur(14px);
-    /* Эффект матового стекла */
-    -webkit-backdrop-filter: blur(14px);
-    z-index: -1;
-}
-
-/* ==========================================================================
-   4. СТРУКТУРА И КОНТЕЙНЕРЫ (GLASSMORPHISM)
-   ========================================================================== */
-.app-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 1.5rem;
-}
-
-.main-card {
-    position: relative;
-    width: 100%;
-    max-width: 480px;
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 14px;
-    padding: 2.2rem 2rem;
-    box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    transition: max-width var(--transition-medium);
-}
-
-/* Увеличение карточки для списка проектов */
-.main-card.wide-card {
-    max-width: 620px;
-}
-
-/* ==========================================================================
-   5. SPA-ПЕРЕКЛЮЧЕНИЕ ЭКРАНОВ И АНИМАЦИИ (SMOOTH STAGGER & SCALE)
-   ========================================================================== */
-.view {
-    display: none;
-    opacity: 0;
-    transform: translateY(12px) scale(0.985);
-    filter: blur(4px);
-    will-change: transform, opacity, filter;
-}
-
-.view.active {
+img {
     display: block;
-    animation: smoothViewIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    max-width: 100%;
 }
 
-@keyframes smoothViewIn {
-    0% {
-        opacity: 0;
-        transform: translateY(12px) scale(0.985);
-        filter: blur(4px);
-    }
-    100% {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0px);
-    }
+*:focus-visible {
+    outline: 2px solid color-mix(in oklab, var(--accent) 60%, transparent);
+    outline-offset: 2px;
 }
 
-/* Каскадное плавное появление элементов внутри экрана */
-.view.active .nav-action-btn,
-.view.active .link-card,
-.view.active .server-box,
-.view.active .whitelist-box,
-.view.active .project-item,
-.view.active .pack-modrinth-link,
-.view.active .pack-tool-link,
-.view.active .changelog-toggle,
-.view.active .wl-input {
-    animation: itemSlideIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+/* ==========================================================================
+   3. ДАШБОРД: ДВЕ КОЛОНКИ ОКОН
+   ========================================================================== */
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 24px clamp(12px, 3vw, 28px) 48px;
 }
 
-/* Задержки для кнопок главной */
-.view.active .nav-action-btn:nth-child(1) { animation-delay: 0.04s; }
-.view.active .nav-action-btn:nth-child(2) { animation-delay: 0.09s; }
-.view.active .nav-action-btn:nth-child(3) { animation-delay: 0.14s; }
-.view.active .nav-action-btn:nth-child(4) { animation-delay: 0.19s; }
-.view.active .nav-action-btn:nth-child(5) { animation-delay: 0.24s; }
+.dash {
+    display: grid;
+    grid-template-columns: var(--left-col) minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+}
 
-/* Задержки для плашек ссылок */
-.view.active .link-card:nth-child(1) { animation-delay: 0.03s; }
-.view.active .link-card:nth-child(2) { animation-delay: 0.07s; }
-.view.active .link-card:nth-child(3) { animation-delay: 0.11s; }
-.view.active .link-card:nth-child(4) { animation-delay: 0.15s; }
-.view.active .link-card:nth-child(5) { animation-delay: 0.19s; }
-.view.active .link-card:nth-child(6) { animation-delay: 0.23s; }
+.dash-col {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+}
 
-/* Задержки для экрана сервера */
-.view.active .server-box { animation-delay: 0.06s; }
-.view.active .whitelist-box { animation-delay: 0.13s; }
+/* ==========================================================================
+   4. ОКНО: ШАПКА С ТОЧКАМИ, СВЁРНУТОЕ И РАСКРЫТОЕ СОСТОЯНИЕ
+   ========================================================================== */
+.win {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.004), var(--bg-3));
+    border: 1px solid var(--edge-0);
+    border-radius: var(--radius);
+    padding: 6px 6px 0;
+    scroll-margin-top: 16px;
+    transition: border-color var(--transition-fast);
+    animation: winIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
 
-@keyframes itemSlideIn {
-    0% {
+.win:hover {
+    border-color: var(--edge-1);
+}
+
+/* Каскадное появление окон */
+.dash-col--left .win:nth-child(2),
+.dash-col--right .win:nth-child(1) { animation-delay: 0.05s; }
+.dash-col--left .win:nth-child(3),
+.dash-col--right .win:nth-child(2) { animation-delay: 0.1s; }
+.dash-col--left .win:nth-child(4),
+.dash-col--right .win:nth-child(3) { animation-delay: 0.15s; }
+
+@keyframes winIn {
+    from {
         opacity: 0;
         transform: translateY(10px);
     }
-    100% {
+    to {
         opacity: 1;
         transform: translateY(0);
     }
 }
 
-/* ==========================================================================
-   6. ОБЩИЕ ЭЛЕМЕНТЫ: ШАПКИ ЭКРАНОВ И КНОПКА [ ← BACK ]
-   ========================================================================== */
-.view-header {
+.win-head {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 0.6rem;
-    margin-bottom: 1.6rem;
-    border-bottom: 1px dashed var(--card-border);
-    padding-bottom: 1rem;
+    align-items: center;
+    min-height: 30px;
+    padding: 6px 54px;
+    border-radius: 6px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.2));
+    box-shadow: inset 0 -1px 0 var(--edge-0);
 }
 
-.back-btn {
-    font-family: var(--font-mono);
-    font-size: 0.88rem;
-    color: var(--text-muted);
-    letter-spacing: -0.02em;
-    padding: 0.2rem 0;
-    transition: color var(--transition-fast), transform var(--transition-fast);
-}
-
-.back-btn:hover {
-    color: var(--text-primary);
-    transform: translateX(-3px);
-}
-
-.view-title {
-    font-size: 1.15rem;
-    font-weight: 500;
-    color: var(--text-primary);
-    letter-spacing: -0.01em;
-}
-
-/* ==========================================================================
-   7. ЭКРАН 1: ГЛАВНАЯ (HOME VIEW)
-   ========================================================================== */
-.home-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.9rem;
-}
-
-.nav-action-btn {
-    width: 100%;
-    padding: 1.05rem 1.25rem;
-    font-size: 1.05rem;
-    font-weight: 500;
+.win-title {
+    flex: 1;
     text-align: center;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    color: var(--text-primary);
-    transition: all var(--transition-fast);
+    color: var(--ink-2);
+    font-size: 13px;
+    font-weight: 500;
     letter-spacing: 0.02em;
 }
 
-.nav-action-btn:hover {
-    background: rgba(255, 255, 255, 0.07);
-    border-color: var(--card-border-hover);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px -4px rgba(0, 0, 0, 0.4);
+.win-dots {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    display: flex;
+    gap: 6px;
+    transform: translateY(-50%);
 }
 
-.nav-action-btn:active {
-    transform: translateY(0);
+.win-dot {
+    position: relative;
+    width: 11px;
+    height: 11px;
+    border-radius: 50%;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 1px rgba(255, 255, 255, 0.2);
+    transition: transform 0.1s ease;
+}
+
+/* Невидимая зона побольше, чтобы попадать по точке пальцем */
+.win-dot::after {
+    content: "";
+    position: absolute;
+    inset: -6px;
+}
+
+.win-dot:hover {
+    transform: scale(1.15);
+}
+
+.win-dot--collapse {
+    background: linear-gradient(180deg, #ff5f56, #e53935);
+}
+
+.win-dot--expand {
+    background: linear-gradient(180deg, #27c93f, #1b9e2e);
+}
+
+.win-body {
+    padding: 14px 10px 18px;
+}
+
+.win.is-collapsed {
+    padding-bottom: 6px;
+}
+
+.win.is-collapsed .win-body {
+    display: none;
+}
+
+/* Раскрытое окно поверх затемнённой страницы; клик по фону закрывает (app.js) */
+body.has-expanded {
+    overflow: hidden;
+}
+
+body.has-expanded::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    background: rgba(2, 3, 4, 0.88);
+}
+
+.win.is-expanded {
+    position: fixed;
+    inset: 4vh max(16px, calc((100vw - 1100px) / 2));
+    z-index: 100;
+    overflow-y: auto;
+    background: var(--bg-2);
+    border-color: var(--edge-2);
+    animation: none;
+}
+
+.win-desc {
+    margin-bottom: 12px;
+    color: var(--muted);
+    font-size: 13px;
 }
 
 /* ==========================================================================
-   8. ЭКРАН 2: LINKS (SOCIALS & CONTACTS)
+   5. ОБЩИЕ ЭЛЕМЕНТЫ: КНОПКИ, СТРОКИ «ПОДПИСЬ — ЗНАЧЕНИЕ», СОСТОЯНИЯ
    ========================================================================== */
-.links-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-
-.link-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.95rem 1.2rem;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
-}
-
-.link-main {
-    display: flex;
-    align-items: center;
-    gap: 0.9rem;
-}
-
-.link-icon-wrap {
-    display: flex;
+.btn {
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 22px;
-    height: 22px;
-    color: var(--text-muted);
-    transition: color var(--transition-fast);
-    flex-shrink: 0;
-}
-
-.link-icon-wrap svg {
+    gap: 6px;
     width: 100%;
-    height: 100%;
-    fill: currentColor;
-}
-
-.link-icon-wrap img,
-.link-custom-icon-img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-}
-
-.link-custom-icon-text {
-    font-size: 1.1rem;
-    line-height: 1;
-    display: inline-block;
-}
-
-.link-title {
-    font-size: 0.95rem;
-    color: var(--text-primary);
-    transition: color var(--transition-fast);
-}
-
-.link-sub {
-    font-size: 0.8rem;
-    color: var(--text-dim);
-    transition: color var(--transition-fast);
-}
-
-/* Интерактив: при ховере название и бордер перекрашиваются в Brand Color */
-.link-card:hover {
-    border-color: var(--brand-color, #ffffff);
-    background: rgba(255, 255, 255, 0.045);
-    transform: translateY(-2px);
-}
-
-.link-card:hover .link-title {
-    color: var(--brand-color, #ffffff);
-}
-
-.link-card:hover .link-icon-wrap {
-    color: var(--brand-color, #ffffff);
-}
-
-.link-card:hover .link-sub {
-    color: var(--text-muted);
-}
-
-/* Специальный градиентный ховер (как у Letterboxd: оранжевый -> зеленый -> циан) */
-.link-card.has-gradient:hover {
-    border-color: transparent;
-    background: linear-gradient(rgba(18, 20, 28, 0.95), rgba(18, 20, 28, 0.95)) padding-box,
-                var(--brand-gradient) border-box;
-    box-shadow: 0 8px 24px -6px rgba(0, 224, 84, 0.25);
-}
-
-.link-card.has-gradient:hover .link-title {
-    background: var(--brand-gradient);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-/* ==========================================================================
-   9. ЭКРАН 3: SERVER (MINECRAFT STATUS - СТРОГИЙ ТЕКСТОВЫЙ МИНИМАЛИЗМ)
-   ========================================================================== */
-.server-box {
-    background: rgba(0, 0, 0, 0.35);
-    border: 1px solid var(--card-border);
+    min-height: 38px;
+    padding: 0 14px;
+    border: 1px solid var(--edge-1);
     border-radius: 8px;
-    padding: 1.4rem 1.2rem;
-    margin-bottom: 1.5rem;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    transition: background var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--edge-2);
+}
+
+.btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn--accent {
+    border-color: transparent;
+    background: var(--accent);
+    color: #fff;
+}
+
+.btn--accent:hover:not(:disabled) {
+    background: color-mix(in oklab, var(--accent) 85%, white);
+    border-color: transparent;
+}
+
+.info-grid {
     display: flex;
     flex-direction: column;
-    gap: 0.75rem;
+    gap: 6px;
+    margin-bottom: 12px;
 }
 
-.server-raw-line {
+#page-info {
+    margin-bottom: 0;
+}
+
+.info-item {
     display: flex;
     align-items: baseline;
-    gap: 0.6rem;
-    font-size: 0.95rem;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.02);
+    font-size: 13px;
 }
 
-.server-raw-line .label {
-    color: var(--text-muted);
+.info-label {
+    flex-shrink: 0;
+    color: var(--muted);
+}
+
+.info-value {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-align: right;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+a.info-value:hover {
+    color: var(--accent);
 }
 
 .status-badge {
-    font-weight: 700;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 600;
 }
 
 .status-online {
-    color: var(--status-online);
+    color: var(--good);
 }
 
 .status-offline {
-    color: var(--status-offline);
+    color: var(--bad);
 }
 
 .status-checking {
-    color: var(--status-checking);
-    animation: blink 1.2s infinite ease-in-out;
+    color: var(--warn);
+    animation: pulse 1.5s infinite ease-in-out;
 }
 
-@keyframes blink {
-
+@keyframes pulse {
     0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.4;
-    }
+    100% { opacity: 1; }
+    50% { opacity: 0.5; }
 }
 
-.whitelist-box {
-    padding-top: 0.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.whitelist-desc {
-    color: var(--text-muted);
-    font-size: 0.88rem;
-}
-
-.whitelist-action-link {
-    display: inline-block;
-    color: var(--text-primary);
-    padding: 0.75rem 1rem;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--card-border);
-    border-radius: 6px;
+.state-indicator {
+    padding: 1.5rem 1rem;
     text-align: center;
-    transition: all var(--transition-fast);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 12px;
 }
 
-.whitelist-action-link:hover {
-    border-color: var(--card-border-hover);
-    background: rgba(255, 255, 255, 0.08);
-    transform: translateY(-1px);
+.state-error {
+    color: var(--bad);
 }
 
 /* ==========================================================================
-   10. ЭКРАН 4: PROJ (MODRINTH PROJECTS)
+   6. ОКНО [links]: КВАДРАТНЫЕ ИКОНКИ
+   ========================================================================== */
+.links-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.link-tile {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    color: var(--ink-2);
+    transition: transform var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
+}
+
+.link-tile svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+}
+
+.link-tile img,
+.link-custom-icon-img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+.link-custom-icon-text {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.link-tile:hover {
+    transform: translateY(-2px);
+    color: var(--brand-color, var(--ink));
+    background: color-mix(in oklab, var(--brand-color, #fff) 14%, transparent);
+}
+
+/* ==========================================================================
+   7. ОКНО [proj]: КАРТОЧКИ ПРОЕКТОВ MODRINTH
    ========================================================================== */
 .projects-container {
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
-    max-height: 58vh;
-    overflow-y: auto;
-    padding-right: 0.35rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 8px;
 }
 
-/* Кастомный минималистичный скроллбар */
-.projects-container::-webkit-scrollbar {
-    width: 5px;
-}
-
-.projects-container::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 4px;
-}
-
-.projects-container::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
-    border-radius: 4px;
-}
-
-.projects-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.25);
+.projects-container .state-indicator {
+    grid-column: 1 / -1;
 }
 
 .project-item {
     display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    padding: 1.1rem;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    transition: all var(--transition-fast);
+    gap: 12px;
+    padding: 12px;
+    border: 1px solid var(--edge-0);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), var(--bg-2));
+    color: inherit;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .project-item:hover {
-    border-color: var(--card-border-hover);
-    background: rgba(255, 255, 255, 0.05);
-    transform: translateY(-2px);
+    border-color: var(--edge-2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .project-icon {
+    flex-shrink: 0;
     width: 44px;
     height: 44px;
+    overflow: hidden;
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--card-border);
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
+    display: grid;
+    place-items: center;
 }
 
 .project-icon img {
@@ -519,40 +450,41 @@ button {
 }
 
 .project-fallback-icon {
-    font-size: 1.2rem;
+    color: var(--ink-2);
     font-weight: 700;
-    color: var(--text-muted);
 }
 
 .project-body {
-    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
     min-width: 0;
 }
 
 .project-head {
     display: flex;
-    justify-content: space-between;
     align-items: baseline;
-    gap: 0.5rem;
-    margin-bottom: 0.35rem;
+    justify-content: space-between;
+    gap: 8px;
 }
 
 .project-name {
-    font-size: 1rem;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
     overflow: hidden;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
     text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .project-downloads {
-    font-size: 0.8rem;
-    color: var(--text-muted);
-    white-space: nowrap;
-    display: flex;
+    display: inline-flex;
+    flex-shrink: 0;
     align-items: center;
-    gap: 0.3rem;
+    gap: 4px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
 }
 
 .project-downloads svg {
@@ -562,150 +494,96 @@ button {
 }
 
 .project-summary {
-    font-family: var(--font-sans);
-    font-size: 0.85rem;
-    color: var(--text-muted);
-    line-height: 1.45;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
     overflow: hidden;
-}
-
-.state-indicator {
-    padding: 2rem 1rem;
-    text-align: center;
-    color: var(--text-muted);
-    font-size: 0.95rem;
-}
-
-.state-error {
-    color: var(--status-offline);
+    color: var(--ink-2);
+    font-size: 12px;
+    line-height: 1.5;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
 }
 
 /* ==========================================================================
-   11. ЭКРАН 5: SE'S PACK И CHANGELOG В СТИЛЕ MODRINTH
+   8. ОКНО [se's pack]: ССЫЛКИ И CHANGELOG В СТИЛЕ MODRINTH
    ========================================================================== */
 .pack-content {
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 8px;
 }
 
-.pack-modrinth-link {
+.pack-link {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1.1rem 1.2rem;
-    background: rgba(27, 217, 106, 0.045);
-    border: 1px solid rgba(27, 217, 106, 0.2);
-    border-radius: 8px;
-    transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--edge-0);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.02);
+    color: inherit;
+    transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
-.pack-modrinth-link:hover {
-    background: rgba(27, 217, 106, 0.09);
+.pack-link:hover {
+    border-color: var(--edge-2);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.pack-link--modrinth {
+    border-color: rgba(27, 217, 106, 0.25);
+    background: rgba(27, 217, 106, 0.05);
+}
+
+.pack-link--modrinth:hover {
     border-color: #1bd96a;
-    transform: translateY(-2px);
+    background: rgba(27, 217, 106, 0.09);
 }
 
 .pack-link-title,
-.pack-link-subtitle {
+.pack-link-sub {
     display: block;
 }
 
 .pack-link-title {
-    margin-bottom: 0.18rem;
-    color: var(--text-primary);
-    font-size: 1rem;
+    color: var(--ink);
+    font-size: 14px;
     font-weight: 600;
 }
 
-.pack-link-subtitle {
-    color: var(--text-muted);
-    font-family: var(--font-sans);
-    font-size: 0.82rem;
+.pack-link-sub {
+    color: var(--muted);
+    font-size: 12px;
+    overflow-wrap: anywhere;
 }
 
 .pack-link-action {
+    flex-shrink: 0;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.pack-link--modrinth .pack-link-action {
     color: #1bd96a;
-    font-size: 0.82rem;
-    white-space: nowrap;
 }
 
-.pack-tool-link {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.95rem 1.1rem;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    transition: border-color var(--transition-fast), background var(--transition-fast), transform var(--transition-fast);
-}
-
-.pack-tool-link:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: var(--card-border-hover);
-    transform: translateY(-2px);
-}
-
-.pack-tool-title,
-.pack-tool-description {
-    display: block;
-}
-
-.pack-tool-title {
-    margin-bottom: 0.18rem;
-    color: var(--text-primary);
-    font-size: 0.9rem;
-    font-weight: 500;
-}
-
-.pack-tool-description {
-    color: var(--text-muted);
-    font-family: var(--font-sans);
-    font-size: 0.8rem;
-}
-
-.pack-tool-action {
-    color: var(--text-muted);
-    font-size: 0.78rem;
-    white-space: nowrap;
-    transition: color var(--transition-fast);
-}
-
-.pack-tool-link:hover .pack-tool-action {
-    color: var(--text-primary);
-}
-
-.changelog-toggle {
-    width: 100%;
-    padding: 0.82rem 1rem;
-    border: 1px solid var(--card-border);
-    border-radius: 7px;
-    background: rgba(255, 255, 255, 0.025);
-    color: var(--text-muted);
-    font-size: 0.9rem;
-    transition: color var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
-}
-
-.changelog-toggle:hover,
 .changelog-toggle[aria-expanded="true"] {
-    color: var(--text-primary);
-    border-color: var(--card-border-hover);
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.07);
+    border-color: var(--edge-2);
 }
 
 .changelog-panel {
     display: flex;
     flex-direction: column;
-    gap: 0.9rem;
+    gap: 10px;
     max-height: 52vh;
     overflow-y: auto;
-    padding-right: 0.35rem;
+    padding-right: 4px;
+}
+
+.win.is-expanded .changelog-panel {
+    max-height: none;
 }
 
 .changelog-panel[hidden] {
@@ -716,29 +594,25 @@ button {
     width: 5px;
 }
 
-.changelog-panel::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: 4px;
-}
-
 .changelog-panel::-webkit-scrollbar-thumb {
     background: rgba(255, 255, 255, 0.12);
     border-radius: 4px;
 }
 
 .changelog-version {
+    flex-shrink: 0;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid var(--card-border);
-    border-radius: 9px;
+    border: 1px solid var(--edge-0);
+    border-radius: var(--radius);
+    background: var(--bg-2);
 }
 
 .changelog-version-header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 1rem 1.1rem 0.7rem;
+    gap: 12px;
+    padding: 12px 12px 8px;
 }
 
 .changelog-heading-group {
@@ -746,25 +620,25 @@ button {
 }
 
 .changelog-version-title {
-    color: var(--text-primary);
-    font-size: 1rem;
-    font-weight: 600;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
     line-height: 1.3;
 }
 
 .changelog-version-number {
     display: block;
-    margin-top: 0.12rem;
-    color: var(--text-dim);
-    font-size: 0.78rem;
+    margin-top: 2px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
 }
 
 .version-type {
     flex-shrink: 0;
-    padding: 0.18rem 0.48rem;
+    padding: 2px 8px;
     border-radius: 999px;
-    font-family: var(--font-sans);
-    font-size: 0.72rem;
+    font-size: 11px;
     font-weight: 600;
     text-transform: capitalize;
 }
@@ -788,50 +662,47 @@ button {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.42rem;
-    padding: 0 1.1rem 0.9rem;
-    color: var(--text-dim);
-    font-family: var(--font-sans);
-    font-size: 0.76rem;
+    gap: 6px;
+    padding: 0 12px 10px;
+    color: var(--muted);
+    font-size: 11px;
 }
 
 .changelog-tag {
-    padding: 0.1rem 0.38rem;
-    border: 1px solid var(--card-border);
+    padding: 1px 6px;
+    border: 1px solid var(--edge-1);
     border-radius: 4px;
-    color: var(--text-muted);
     background: rgba(255, 255, 255, 0.025);
+    font-family: var(--mono);
 }
 
 .changelog-body {
-    padding: 1rem 1.1rem 1.1rem;
-    border-top: 1px solid var(--card-border);
-    color: #c6cad3;
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
+    padding: 12px;
+    border-top: 1px solid var(--edge-0);
+    color: var(--ink-2);
+    font-size: 13px;
     line-height: 1.6;
 }
 
 .changelog-body > * + * {
-    margin-top: 0.75rem;
+    margin-top: 10px;
 }
 
 .changelog-body h3,
 .changelog-body h4,
 .changelog-body h5,
 .changelog-body h6 {
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-    font-size: 0.95rem;
+    color: var(--ink);
+    font-size: 14px;
 }
 
 .changelog-body ul,
 .changelog-body ol {
-    padding-left: 1.35rem;
+    padding-left: 20px;
 }
 
 .changelog-body li + li {
-    margin-top: 0.25rem;
+    margin-top: 4px;
 }
 
 .changelog-body a {
@@ -841,178 +712,172 @@ button {
 }
 
 .changelog-body code {
-    padding: 0.12rem 0.32rem;
-    border: 1px solid var(--card-border);
+    padding: 1px 5px;
+    border: 1px solid var(--edge-1);
     border-radius: 4px;
     background: rgba(0, 0, 0, 0.3);
-    color: #e4e7ec;
-    font-family: var(--font-mono);
-    font-size: 0.84em;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 0.86em;
 }
 
 .changelog-body pre {
     overflow-x: auto;
-    padding: 0.8rem;
-    border: 1px solid var(--card-border);
+    padding: 10px;
+    border: 1px solid var(--edge-1);
     border-radius: 6px;
     background: rgba(0, 0, 0, 0.35);
-    color: #e4e7ec;
-    font-family: var(--font-mono);
-    font-size: 0.8rem;
+    color: var(--ink);
+    font-family: var(--mono);
+    font-size: 12px;
     white-space: pre;
 }
 
 .changelog-body blockquote {
-    padding-left: 0.85rem;
+    padding-left: 12px;
     border-left: 3px solid rgba(27, 217, 106, 0.45);
-    color: var(--text-muted);
+    color: var(--muted);
 }
 
 .changelog-body hr {
     border: 0;
-    border-top: 1px solid var(--card-border);
+    border-top: 1px solid var(--edge-1);
 }
 
 .changelog-no-notes {
-    color: var(--text-muted);
+    color: var(--muted);
     font-style: italic;
 }
 
 .changelog-empty {
-    padding: 1.4rem 1rem;
-    border: 1px dashed var(--card-border);
-    border-radius: 8px;
-    color: var(--text-muted);
+    padding: 20px 14px;
+    border: 1px dashed var(--edge-1);
+    border-radius: var(--radius);
+    color: var(--muted);
     text-align: center;
-    font-size: 0.88rem;
+    font-size: 13px;
 }
 
 .changelog-empty strong {
     display: block;
-    margin-bottom: 0.45rem;
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
-.changelog-empty p {
-    font-family: var(--font-sans);
-    line-height: 1.45;
+    margin-bottom: 6px;
+    color: var(--ink);
+    font-weight: 600;
 }
 
 /* ==========================================================================
-   11.1. ЭКРАН 6: WATCHLIST MATCH (LETTERBOXD)
+   9. ОКНО [watchlist match] (LETTERBOXD)
    ========================================================================== */
 .wl-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-    margin-bottom: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.wl-form .btn {
+    width: auto;
 }
 
 .wl-input {
     width: 100%;
-    padding: 0.82rem 1rem;
-    border: 1px solid var(--card-border);
-    border-radius: 7px;
+    min-height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--edge-1);
+    border-radius: 8px;
     background: rgba(255, 255, 255, 0.025);
-    color: var(--text-primary);
-    font-family: var(--font-mono);
-    font-size: 0.9rem;
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 13px;
     outline: none;
     transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
 .wl-input::placeholder {
-    color: var(--text-dim);
+    color: var(--muted);
 }
 
 .wl-input:focus {
-    border-color: #00E054;
+    border-color: var(--accent);
     background: rgba(255, 255, 255, 0.05);
-}
-
-.changelog-toggle:disabled {
-    opacity: 0.5;
-    cursor: default;
 }
 
 .wl-film {
     display: flex;
-    gap: 1.1rem;
-    padding: 1rem;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    animation: itemSlideIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
-    transition: border-color var(--transition-fast), background var(--transition-fast);
+    gap: 16px;
+    padding: 12px;
+    border: 1px solid var(--edge-0);
+    border-radius: var(--radius);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), var(--bg-2));
+    color: inherit;
+    animation: winIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
+    transition: border-color var(--transition-fast);
 }
 
 .wl-film:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: var(--card-border-hover);
+    border-color: var(--edge-2);
 }
 
 .wl-poster {
     flex-shrink: 0;
     width: 130px;
     aspect-ratio: 2 / 3;
-    border-radius: 5px;
     overflow: hidden;
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--card-border);
+    box-shadow: inset 0 0 0 1px var(--edge-0);
 }
 
 .wl-poster img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    display: block;
 }
 
 .wl-film-body {
     display: flex;
     flex-direction: column;
-    gap: 0.5rem;
+    gap: 8px;
     min-width: 0;
 }
 
 .wl-film-title {
-    color: var(--text-primary);
-    font-size: 1.1rem;
-    font-weight: 600;
-    line-height: 1.3;
+    color: var(--ink);
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.25;
 }
 
 .wl-film-year {
-    color: var(--text-muted);
+    color: var(--muted);
     font-weight: 400;
 }
 
 .wl-film-meta {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem 1rem;
-    color: var(--text-muted);
-    font-size: 0.82rem;
+    gap: 4px 14px;
+    color: var(--muted);
+    font-size: 12px;
 }
 
 .wl-film-rating {
     display: inline-flex;
     align-items: center;
-    gap: 0.3rem;
-    color: var(--text-primary);
+    gap: 4px;
+    color: var(--ink);
+    font-family: var(--mono);
 }
 
 .wl-film-rating svg {
-    width: 15px;
-    height: 15px;
-    fill: #00E054;
+    width: 14px;
+    height: 14px;
+    fill: var(--good);
 }
 
 .wl-film-synopsis {
-    color: var(--text-muted);
-    font-family: var(--font-sans);
-    font-size: 0.9rem;
+    color: var(--ink-2);
+    font-size: 13px;
     line-height: 1.55;
 }
 
@@ -1020,54 +885,89 @@ button {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.6rem;
-    margin-top: 0.9rem;
+    gap: 8px;
+    margin-top: 10px;
 }
 
 .wl-counter {
-    color: var(--text-dim);
-    font-size: 0.8rem;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
 }
 
-.changelog-toggle.wl-pick:not(:disabled):hover {
-    color: #00E054;
-    border-color: #00E054;
+.btn.wl-pick:hover:not(:disabled) {
+    color: var(--good);
+    border-color: var(--good);
 }
 
 /* ==========================================================================
-   12. АДАПТИВНОСТЬ (MOBILE & DESKTOP)
+   10. ОКНО [recently watched]: ПОСТЕРЫ ИЗ ДНЕВНИКА LETTERBOXD
    ========================================================================== */
+.recent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    gap: 12px;
+}
+
+.recent-grid .state-indicator {
+    grid-column: 1 / -1;
+}
+
+.recent-film {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    color: inherit;
+}
+
+.recent-poster {
+    width: 100%;
+    margin-bottom: 6px;
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.recent-film:hover .recent-poster {
+    transform: translateY(-2px);
+    box-shadow: inset 0 0 0 1px var(--edge-2), 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.recent-title {
+    overflow: hidden;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recent-meta {
+    color: var(--good);
+    font-size: 12px;
+}
+
+.recent-date {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+}
+
+/* ==========================================================================
+   11. АДАПТИВНОСТЬ
+   ========================================================================== */
+@media (max-width: 900px) {
+    .dash {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
 @media (max-width: 600px) {
-    .app-wrapper {
-        padding: 1rem 0.8rem;
+    .wl-form {
+        grid-template-columns: 1fr;
     }
 
-    .main-card {
-        padding: 1.8rem 1.3rem;
-        border-radius: 12px;
-    }
-
-    .nav-action-btn {
-        padding: 0.95rem 1rem;
-        font-size: 1rem;
-    }
-
-    .project-item {
-        padding: 0.95rem;
-    }
-
-    .pack-modrinth-link {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .pack-tool-link {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .pack-link-subtitle {
-        overflow-wrap: anywhere;
+    .wl-form .btn {
+        width: 100%;
     }
 
     .wl-film {
@@ -1075,7 +975,22 @@ button {
         align-items: center;
     }
 
-    .wl-poster {
+    .wl-film .wl-poster {
         width: 150px;
+    }
+
+    .recent-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .win.is-expanded {
+        inset: 8px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .win,
+    .wl-film {
+        animation: none;
     }
 }

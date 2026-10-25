@@ -6,14 +6,14 @@
  * Вы можете настраивать сайт без необходимости править логику ниже.
  */
 const CONFIG = {
-    // IP адрес Minecraft-сервера для экрана [server]
+    // IP адрес Minecraft-сервера для окна [server]
     // Сюда впишите ваш реальный адрес сервера (например: 'mc.hypixel.net' или 'play.myserver.ru')
     minecraftServerIP: "play.margoles.xyz",
 
     // Ссылка на Telegram для подачи заявки на вайтлист
     whitelistTelegramUrl: "https://t.me/zqape",
 
-    // Username пользователя на Modrinth для экрана [proj]
+    // Username пользователя на Modrinth для окна [proj]
     // Сюда впишите ваш логин на Modrinth (например: 'jellysquid3' или 'Iris-Dimension')
     modrinthUsername: "touchfalls",
 
@@ -22,10 +22,17 @@ const CONFIG = {
     modrinthPackUrl: "https://modrinth.com/modpack/ses-pack",
     mrpackConverterUrl: "https://mctoolbox.net/mrpack-to-zip",
 
-    // Cloudflare Worker из папки worker/ — CORS-прокси для страниц Letterboxd на экране [watchlist match]
+    // Cloudflare Worker из папки worker/ — CORS-прокси для страниц Letterboxd в окне [watchlist match]
     letterboxdProxy: "https://letterboxd-proxy.margoles.workers.dev",
 
-    // Список ссылок для экрана [links]
+    // Чей дневник Letterboxd показывать в окне [recently watched] и сколько фильмов
+    letterboxdUsername: "touchfalls",
+    recentFilmsCount: 6,
+
+    // Репозиторий сайта на GitHub для окна [page info]
+    githubRepo: "touchfalls/whale",
+
+    // Список ссылок для окна [links]
     // КАК ДОБАВЛЯТЬ ИКОНКИ ПО ПУТИ К ФАЙЛУ:
     // Вы можете указать:
     // 1) Относительный путь к файлу: icon: "./icons/telegram.svg" или icon: "./my_photo.png"
@@ -44,7 +51,6 @@ const CONFIG = {
             sub: "letterboxd.com",
             url: "https://letterboxd.com/touchfalls",
             brandColor: "#00E054", // Фирменный зеленый
-            brandGradient: "linear-gradient(90deg, #FF8000 0%, #00E054 50%, #40BCF4 100%)", // 3-цветный градиент Letterboxd
             icon: `<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="4.2" fill="#FF8000"/><circle cx="12" cy="12" r="4.2" fill="#00E054"/><circle cx="18.5" cy="12" r="4.2" fill="#40BCF4"/></svg>`
         },
         {
@@ -78,61 +84,63 @@ const CONFIG = {
     ]
 };
 
+// Зависший запрос к API не должен держать окно в состоянии «loading» минутами
+const FETCH_TIMEOUT_MS = 15000;
+const withTimeout = () => ({ signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
+
 /**
  * ============================================================================
- * 2. SPA-РОУТИНГ (HASH-ROUTING & BUTTON EVENTS)
+ * 2. ОКНА ДАШБОРДА: КНОПКИ-ТОЧКИ «СВЕРНУТЬ» И «РАСКРЫТЬ»
  * ============================================================================
  */
+function setupWindowControls() {
+    document.querySelectorAll(".win").forEach(win => {
+        const head = win.querySelector(".win-head");
+        const title = head.querySelector(".win-title").textContent;
 
-// Список доступных экранов
-const VALID_VIEWS = ["home", "links", "server", "proj", "ses-pack", "watchlist"];
+        const dots = document.createElement("div");
+        dots.className = "win-dots";
+        dots.innerHTML = `
+            <button class="win-dot win-dot--collapse" type="button" aria-expanded="true" aria-label="Collapse ${title}" title="collapse"></button>
+            <button class="win-dot win-dot--expand" type="button" aria-pressed="false" aria-label="Expand ${title}" title="expand"></button>
+        `;
+        head.prepend(dots);
 
-// Переключение экранов
-function navigateTo(targetView) {
-    if (!VALID_VIEWS.includes(targetView)) {
-        targetView = "home";
-    }
+        const [collapseBtn, expandBtn] = dots.children;
+        collapseBtn.addEventListener("click", () => {
+            // У раскрытого окна красная точка работает как «закрыть», как в macOS
+            if (win.classList.contains("is-expanded")) return closeExpandedWindow();
+            const collapsed = win.classList.toggle("is-collapsed");
+            collapseBtn.setAttribute("aria-expanded", String(!collapsed));
+        });
+        expandBtn.addEventListener("click", () => setWindowExpanded(win, !win.classList.contains("is-expanded")));
+    });
 
-    // Смена хэша сама вызовет handleHashChange, рисуем напрямую только если хэш тот же
-    if (window.location.hash !== `#${targetView}`) {
-        window.location.hash = targetView;
-    } else {
-        renderView(targetView);
-    }
+    // Раскрытое окно закрывается по Esc или клику по затемнённому фону (это сам body)
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") closeExpandedWindow();
+    });
+    document.body.addEventListener("click", (e) => {
+        if (e.target === document.body) closeExpandedWindow();
+    });
 }
 
-function renderView(viewName) {
-    const mainCard = document.getElementById("main-card");
-    const allViews = document.querySelectorAll(".view");
-
-    // Удаляем активный класс со всех секций
-    allViews.forEach(view => view.classList.remove("active"));
-
-    // Активируем нужный экран
-    const targetSection = document.getElementById(`view-${viewName}`);
-    if (targetSection) {
-        targetSection.classList.add("active");
-    }
-
-    // Расширяем карточку для экрана проектов для удобного отображения
-    if (viewName === "proj" || viewName === "ses-pack" || viewName === "watchlist") {
-        mainCard.classList.add("wide-card");
-    } else {
-        mainCard.classList.remove("wide-card");
-    }
-
-    // Запуск специфической логики при открытии экранов
-    if (viewName === "server") {
-        fetchMinecraftStatus();
-    } else if (viewName === "proj") {
-        fetchModrinthProjects();
-    }
+function setWindowExpanded(win, expanded) {
+    closeExpandedWindow();
+    if (!expanded) return;
+    win.classList.add("is-expanded");
+    win.classList.remove("is-collapsed");
+    win.querySelector(".win-dot--collapse").setAttribute("aria-expanded", "true");
+    win.querySelector(".win-dot--expand").setAttribute("aria-pressed", "true");
+    document.body.classList.add("has-expanded");
 }
 
-// Обработчик изменения хэша (кнопки браузера «вперед/назад» или переход по ссылке)
-function handleHashChange() {
-    const hash = window.location.hash.replace("#", "") || "home";
-    renderView(hash);
+function closeExpandedWindow() {
+    document.querySelectorAll(".win.is-expanded").forEach(win => {
+        win.classList.remove("is-expanded");
+        win.querySelector(".win-dot--expand").setAttribute("aria-pressed", "false");
+    });
+    document.body.classList.remove("has-expanded");
 }
 
 /**
@@ -141,7 +149,7 @@ function handleHashChange() {
  * ============================================================================
  */
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Ссылка на вайтлист
+    // 1. Ссылки из CONFIG
     const whitelistEl = document.getElementById("whitelist-tg-link");
     if (whitelistEl) whitelistEl.href = CONFIG.whitelistTelegramUrl;
 
@@ -151,32 +159,23 @@ document.addEventListener("DOMContentLoaded", () => {
     const converterLinkEl = document.getElementById("pack-converter-link");
     if (converterLinkEl) converterLinkEl.href = CONFIG.mrpackConverterUrl;
 
-    // 2. Генерация плашек на экране [links]
+    // 2. Окна и их содержимое
+    setupWindowControls();
     renderLinksList();
-
-    // 3. Привязка обработчиков клика для навигации
-    setupNavigationListeners();
+    fetchMinecraftStatus();
+    fetchModrinthProjects();
+    fetchRecentFilms();
+    fetchPageInfo();
 
     // Changelog запрашивается только после явного нажатия на кнопку
     setupPackChangelog();
 
     setupWatchlistMatch();
 
-    // 4. Обработка начального маршрута
-    window.addEventListener("hashchange", handleHashChange);
-    handleHashChange();
+    // 3. Старые ссылки вида margoles.xyz/#watchlist прокручивают к нужному окну
+    const hashTarget = document.getElementById(`win-${window.location.hash.slice(1)}`);
+    if (hashTarget) hashTarget.scrollIntoView();
 });
-
-// Навешивание событий на кнопки [links], [server], [proj] и [ ← back ]
-function setupNavigationListeners() {
-    document.querySelectorAll("[data-target]").forEach(button => {
-        button.addEventListener("click", (e) => {
-            e.preventDefault();
-            const target = button.getAttribute("data-target");
-            navigateTo(target);
-        });
-    });
-}
 
 /**
  * Функция-помощник: распознает тип иконки (SVG, путь к файлу картинки или эмодзи)
@@ -201,7 +200,7 @@ function resolveIconHtml(icon) {
 
 /**
  * ============================================================================
- * 4. ЭКРАН [links]: ГЕНЕРАЦИЯ СПИСКА ССЫЛОК
+ * 4. ОКНО [links]: ГЕНЕРАЦИЯ СПИСКА ССЫЛОК
  * ============================================================================
  */
 function renderLinksList() {
@@ -213,28 +212,16 @@ function renderLinksList() {
     CONFIG.socials.forEach(social => {
         const linkCard = document.createElement("a");
         linkCard.href = social.url;
-        linkCard.className = "link-card";
+        linkCard.className = "link-tile";
         linkCard.target = "_blank";
         linkCard.rel = "noopener noreferrer";
+        linkCard.title = `${social.name} — ${social.sub}`;
+        linkCard.setAttribute("aria-label", social.name);
 
         // Задаем CSS-переменную для фирменного цвета ховера
         linkCard.style.setProperty("--brand-color", social.brandColor);
 
-        // Если задан градиент (как у Letterboxd)
-        if (social.brandGradient) {
-            linkCard.classList.add("has-gradient");
-            linkCard.style.setProperty("--brand-gradient", social.brandGradient);
-        }
-
-        const iconHtml = resolveIconHtml(social.icon || social.iconSvg);
-
-        linkCard.innerHTML = `
-            <div class="link-main">
-                <div class="link-icon-wrap">${iconHtml}</div>
-                <span class="link-title">${social.name}</span>
-            </div>
-            <span class="link-sub">${social.sub}</span>
-        `;
+        linkCard.innerHTML = resolveIconHtml(social.icon);
 
         container.appendChild(linkCard);
     });
@@ -242,20 +229,15 @@ function renderLinksList() {
 
 /**
  * ============================================================================
- * 5. ЭКРАН [server]: ПРОВЕРКА СТАТУСА MINECRAFT СЕРВЕРА (ЧЕРЕЗ MC-STATUS API)
+ * 5. ОКНО [server]: ПРОВЕРКА СТАТУСА MINECRAFT СЕРВЕРА (ЧЕРЕЗ MC-STATUS API)
  * ============================================================================
  */
-let isCheckingServer = false;
-
 async function fetchMinecraftStatus() {
-    if (isCheckingServer) return;
-
     const statusBadge = document.getElementById("mc-status");
     if (!statusBadge) return;
 
     statusBadge.textContent = "[checking...]";
     statusBadge.className = "status-badge status-checking";
-    isCheckingServer = true;
 
     try {
         const serverIp = (CONFIG.minecraftServerIP || "").trim();
@@ -266,7 +248,7 @@ async function fetchMinecraftStatus() {
         }
 
         // 1. Проверка через mcstatus.io (Java Edition)
-        let response = await fetch(`https://api.mcstatus.io/v2/status/java/${encodeURIComponent(serverIp)}`);
+        let response = await fetch(`https://api.mcstatus.io/v2/status/java/${encodeURIComponent(serverIp)}`, withTimeout());
         let data = null;
 
         if (response.ok) {
@@ -276,7 +258,7 @@ async function fetchMinecraftStatus() {
         // 2. Если Java оффлайн, пробуем Bedrock Edition на mcstatus.io
         if (!data || !data.online) {
             try {
-                const bedrockRes = await fetch(`https://api.mcstatus.io/v2/status/bedrock/${encodeURIComponent(serverIp)}`);
+                const bedrockRes = await fetch(`https://api.mcstatus.io/v2/status/bedrock/${encodeURIComponent(serverIp)}`, withTimeout());
                 if (bedrockRes.ok) {
                     const bedrockData = await bedrockRes.json();
                     if (bedrockData && bedrockData.online) {
@@ -307,29 +289,23 @@ async function fetchMinecraftStatus() {
         console.error("mcstatus.io API error:", error);
         statusBadge.textContent = "[offline]";
         statusBadge.className = "status-badge status-offline";
-    } finally {
-        isCheckingServer = false;
     }
 }
 
 /**
  * ============================================================================
- * 6. ЭКРАН [proj]: ПОДГРУЗКА ПРОЕКТОВ MODRINTH (API)
+ * 6. ОКНО [proj]: ПОДГРУЗКА ПРОЕКТОВ MODRINTH (API)
  * ============================================================================
  */
-let isModrinthProjectsLoaded = false;
-
 async function fetchModrinthProjects() {
-    if (isModrinthProjectsLoaded) return;
-
     const container = document.getElementById("projects-container");
     if (!container) return;
 
-    container.innerHTML = `<div class="state-indicator" id="projects-loading">[loading projects...]</div>`;
+    container.innerHTML = `<div class="state-indicator">[loading projects...]</div>`;
 
     try {
         // Запрос к Modrinth API v2
-        const response = await fetch(`https://api.modrinth.com/v2/user/${encodeURIComponent(CONFIG.modrinthUsername)}/projects`);
+        const response = await fetch(`https://api.modrinth.com/v2/user/${encodeURIComponent(CONFIG.modrinthUsername)}/projects`, withTimeout());
 
         if (!response.ok) {
             throw new Error(`Modrinth API responded with status ${response.status}`);
@@ -381,8 +357,6 @@ async function fetchModrinthProjects() {
 
             container.appendChild(projectCard);
         });
-
-        isModrinthProjectsLoaded = true;
     } catch (error) {
         console.error("Modrinth Projects API error:", error);
         container.innerHTML = `<div class="state-indicator state-error">[error loading projects from modrinth]</div>`;
@@ -405,7 +379,7 @@ function formatDownloadsCount(count) {
 
 /**
  * ============================================================================
- * 7. ЭКРАН [se's pack]: ЛЕНИВАЯ ЗАГРУЗКА CHANGELOG С MODRINTH
+ * 7. ОКНО [se's pack]: ЛЕНИВАЯ ЗАГРУЗКА CHANGELOG С MODRINTH
  * ============================================================================
  */
 let isPackChangelogLoaded = false;
@@ -420,7 +394,7 @@ function setupPackChangelog() {
         const shouldOpen = panel.hidden;
         panel.hidden = !shouldOpen;
         toggle.setAttribute("aria-expanded", String(shouldOpen));
-        toggle.textContent = shouldOpen ? "[ hide changelog ]" : "[ show changelog ]";
+        toggle.textContent = shouldOpen ? "hide changelog" : "show changelog";
 
         if (shouldOpen && !isPackChangelogLoaded && !isPackChangelogLoading) {
             fetchPackChangelog();
@@ -437,7 +411,7 @@ async function fetchPackChangelog() {
 
     try {
         const endpoint = `https://api.modrinth.com/v2/project/${encodeURIComponent(CONFIG.modrinthPackSlug)}/version?include_changelog=true`;
-        const response = await fetch(endpoint);
+        const response = await fetch(endpoint, withTimeout());
 
         if (response.status === 404) {
             renderPendingPackMessage(panel);
@@ -713,7 +687,7 @@ function appendInlineMarkdown(parent, text) {
 
 /**
  * ============================================================================
- * 8. ЭКРАН [watchlist match]: ОБЩИЕ ФИЛЬМЫ ИЗ ДВУХ WATCHLIST LETTERBOXD
+ * 8. ОКНО [watchlist match]: ОБЩИЕ ФИЛЬМЫ ИЗ ДВУХ WATCHLIST LETTERBOXD
  * ============================================================================
  * У Letterboxd нет CORS и публичного API, поэтому HTML страниц
  * забирается через CONFIG.letterboxdProxy и разбирается DOMParser'ом.
@@ -739,7 +713,7 @@ async function fetchLetterboxdPage(path, onWait) {
     const url = `${CONFIG.letterboxdProxy}${path}`;
 
     for (let attempt = 0; attempt < 6; attempt++) {
-        const response = await fetch(url);
+        const response = await fetch(url, withTimeout());
 
         if (response.status === 429) {
             if (onWait) onWait();
@@ -985,9 +959,9 @@ async function showWatchlistMatch() {
     counter.textContent = `match ${watchlistMatchIndex + 1} of ${watchlistMatches.length}`;
 
     const pickButton = document.createElement("button");
-    pickButton.className = "changelog-toggle wl-pick";
+    pickButton.className = "btn wl-pick";
     pickButton.type = "button";
-    pickButton.textContent = "[ PICK ANOTHER FILM ]";
+    pickButton.textContent = "PICK ANOTHER FILM";
     pickButton.disabled = watchlistMatches.length < 2;
     pickButton.addEventListener("click", () => {
         watchlistMatchIndex = (watchlistMatchIndex + 1) % watchlistMatches.length;
@@ -996,4 +970,124 @@ async function showWatchlistMatch() {
 
     footer.append(counter, pickButton);
     result.append(card, footer);
+}
+
+/**
+ * ============================================================================
+ * 9. ОКНО [recently watched]: ПОСЛЕДНИЕ ФИЛЬМЫ ИЗ RSS ДНЕВНИКА LETTERBOXD
+ * ============================================================================
+ */
+async function fetchRecentFilms() {
+    const container = document.getElementById("recent-container");
+    if (!container) return;
+
+    try {
+        const response = await fetch(`${CONFIG.letterboxdProxy}/${encodeURIComponent(CONFIG.letterboxdUsername)}/rss/`, withTimeout());
+        if (!response.ok) throw new Error(`Letterboxd proxy responded with status ${response.status}`);
+
+        const xml = new DOMParser().parseFromString(await response.text(), "text/xml");
+        // В RSS есть и списки — у записей дневника всегда есть filmTitle
+        const items = [...xml.getElementsByTagName("item")]
+            .filter(item => item.getElementsByTagName("letterboxd:filmTitle").length)
+            .slice(0, CONFIG.recentFilmsCount);
+
+        container.innerHTML = "";
+        if (items.length === 0) {
+            setWatchlistState(container, "[diary is empty]");
+            return;
+        }
+        items.forEach(item => container.appendChild(createRecentFilm(item)));
+    } catch (error) {
+        console.error("Letterboxd RSS error:", error);
+        setWatchlistState(container, "[error loading diary from letterboxd]", true);
+    }
+}
+
+function createRecentFilm(item) {
+    const field = (name) => item.getElementsByTagName(name)[0]?.textContent.trim() || "";
+    // Постер лежит картинкой внутри HTML-описания записи
+    const description = new DOMParser().parseFromString(field("description"), "text/html");
+    const posterUrl = description.querySelector("img")?.src || "";
+    const rating = parseFloat(field("letterboxd:memberRating"));
+
+    const card = document.createElement("a");
+    card.className = "recent-film";
+    card.href = field("link");
+    card.target = "_blank";
+    card.rel = "noopener noreferrer";
+
+    const poster = document.createElement("div");
+    poster.className = "wl-poster recent-poster";
+    if (posterUrl) {
+        const img = document.createElement("img");
+        img.src = posterUrl;
+        img.alt = `${field("letterboxd:filmTitle")} poster`;
+        img.loading = "lazy";
+        poster.appendChild(img);
+    }
+
+    const title = document.createElement("span");
+    title.className = "recent-title";
+    title.textContent = field("letterboxd:filmTitle");
+
+    const meta = document.createElement("span");
+    meta.className = "recent-meta";
+    const stars = Number.isFinite(rating) ? "★".repeat(Math.floor(rating)) + (rating % 1 ? "½" : "") : "";
+    const liked = field("letterboxd:memberLike") === "Yes" ? " ♥" : "";
+    meta.textContent = `${field("letterboxd:filmYear")} ${stars}${liked}`.trim();
+
+    const date = document.createElement("span");
+    date.className = "recent-date";
+    // Полдень, чтобы дата без времени не съезжала на день назад в западных часовых поясах
+    date.textContent = formatModrinthDate(`${field("letterboxd:watchedDate")}T12:00:00`);
+
+    card.append(poster, title, meta, date);
+    return card;
+}
+
+/**
+ * ============================================================================
+ * 10. ОКНО [page info]: ПОСЛЕДНЕЕ ОБНОВЛЕНИЕ САЙТА (GITHUB API)
+ * ============================================================================
+ */
+async function fetchPageInfo() {
+    const container = document.getElementById("page-info");
+    if (!container) return;
+
+    const rows = [["source", `github.com/${CONFIG.githubRepo}`, `https://github.com/${CONFIG.githubRepo}`]];
+
+    try {
+        const response = await fetch(`https://api.github.com/repos/${CONFIG.githubRepo}/commits?per_page=1`, withTimeout());
+        if (!response.ok) throw new Error(`GitHub API responded with status ${response.status}`);
+
+        const [commit] = await response.json();
+        rows.unshift(
+            ["updated", formatModrinthDate(commit.commit.committer.date)],
+            ["commit", `${commit.sha.slice(0, 7)} ${commit.commit.message.split("\n")[0]}`, commit.html_url]
+        );
+    } catch (error) {
+        console.error("GitHub API error:", error);
+    }
+
+    container.innerHTML = "";
+    rows.forEach(([label, value, url]) => {
+        const row = document.createElement("div");
+        row.className = "info-item";
+
+        const labelEl = document.createElement("span");
+        labelEl.className = "info-label";
+        labelEl.textContent = label;
+
+        const valueEl = document.createElement(url ? "a" : "span");
+        valueEl.className = "info-value";
+        valueEl.textContent = value;
+        if (url) {
+            valueEl.href = url;
+            valueEl.target = "_blank";
+            valueEl.rel = "noopener noreferrer";
+        }
+
+        row.append(labelEl, valueEl);
+        container.appendChild(row);
+    });
 }

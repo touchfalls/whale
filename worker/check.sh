@@ -11,6 +11,7 @@ check() {
 
 check /touchfalls/watchlist/ 'data-item-slug'
 check /touchfalls/watchlist/ 'paginate-page'
+check /touchfalls/rss/ 'letterboxd:filmTitle'
 check /film/the-mist/ 'application/ld+json'
 check /film/the-mist/ 'og:description'
 check /film/the-mist/ 'releasedate'
