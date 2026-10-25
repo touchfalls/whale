@@ -25,6 +25,9 @@ const CONFIG = {
     modrinthPackUrl: "https://modrinth.com/modpack/ses-pack",
     mrpackConverterUrl: "https://mctoolbox.net/mrpack-to-zip",
 
+    // Cloudflare Worker из папки worker/ — CORS-прокси для страниц Letterboxd на экране [watchlist match]
+    letterboxdProxy: "https://letterboxd-proxy.margoles.workers.dev",
+
     // Список ссылок для экрана [links]
     // КАК ДОБАВЛЯТЬ ИКОНКИ ПО ПУТИ К ФАЙЛУ:
     // Вы можете указать:
@@ -85,7 +88,7 @@ const CONFIG = {
  */
 
 // Список доступных экранов
-const VALID_VIEWS = ["home", "links", "server", "proj", "ses-pack"];
+const VALID_VIEWS = ["home", "links", "server", "proj", "ses-pack", "watchlist"];
 
 // Переключение экранов
 function navigateTo(targetView) {
@@ -115,7 +118,7 @@ function renderView(viewName) {
     }
 
     // Расширяем карточку для экрана проектов для удобного отображения
-    if (viewName === "proj" || viewName === "ses-pack") {
+    if (viewName === "proj" || viewName === "ses-pack" || viewName === "watchlist") {
         mainCard.classList.add("wide-card");
     } else {
         mainCard.classList.remove("wide-card");
@@ -166,6 +169,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Changelog запрашивается только после явного нажатия на кнопку
     setupPackChangelog();
+
+    setupWatchlistMatch();
 
     // 5. Обработка начального маршрута
     window.addEventListener("hashchange", handleHashChange);
@@ -710,4 +715,285 @@ function appendInlineMarkdown(parent, text) {
     }
 
     parent.appendChild(document.createTextNode(text.slice(lastIndex)));
+}
+
+/**
+ * ============================================================================
+ * 8. ЭКРАН [watchlist match]: ОБЩИЕ ФИЛЬМЫ ИЗ ДВУХ WATCHLIST LETTERBOXD
+ * ============================================================================
+ * У Letterboxd нет CORS и публичного API, поэтому HTML страниц
+ * забирается через CONFIG.letterboxdProxy и разбирается DOMParser'ом.
+ */
+let watchlistMatches = [];
+let watchlistMatchIndex = 0;
+let watchlistRequestId = 0;
+const letterboxdFilmCache = new Map();
+
+function setupWatchlistMatch() {
+    const form = document.getElementById("wl-form");
+    if (!form) return;
+
+    form.addEventListener("submit", (e) => {
+        e.preventDefault();
+        findWatchlistMatches(form.user1.value, form.user2.value);
+    });
+}
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+async function fetchLetterboxdPage(path, onWait) {
+    const url = `${CONFIG.letterboxdProxy}${path}`;
+
+    for (let attempt = 0; attempt < 6; attempt++) {
+        const response = await fetch(url);
+
+        if (response.status === 429) {
+            if (onWait) onWait();
+            await sleep(15000);
+            continue;
+        }
+        // Несуществующий пользователь/фильм — пустая страница, дальше это покажется как «not found»
+        if (response.status === 404) {
+            return new DOMParser().parseFromString("", "text/html");
+        }
+        if (!response.ok) {
+            throw new Error(`Letterboxd proxy responded with status ${response.status}`);
+        }
+        return new DOMParser().parseFromString(await response.text(), "text/html");
+    }
+    throw new Error("Letterboxd proxy rate limit");
+}
+
+// Выполняет задачи с ограничением параллельности, чтобы не упираться в лимит прокси
+async function runWithConcurrency(tasks, limit) {
+    const results = [];
+    let next = 0;
+    const worker = async () => {
+        while (next < tasks.length) {
+            const i = next++;
+            results[i] = await tasks[i]();
+        }
+    };
+    await Promise.all(Array.from({ length: Math.min(limit, tasks.length) }, worker));
+    return results;
+}
+
+function parseWatchlistPage(doc) {
+    return [...doc.querySelectorAll("[data-item-slug]")].map(el => ({
+        slug: el.dataset.itemSlug,
+        name: el.dataset.itemName || el.dataset.itemSlug
+    }));
+}
+
+async function fetchWatchlist(username, onProgress) {
+    const firstPage = await fetchLetterboxdPage(`/${username}/watchlist/`, onProgress.wait);
+    const films = parseWatchlistPage(firstPage);
+
+    const pageNumbers = [...firstPage.querySelectorAll(".paginate-page a")].map(a => parseInt(a.textContent, 10));
+    const lastPage = Math.max(1, ...pageNumbers.filter(Number.isFinite));
+    onProgress.page();
+
+    const tasks = [];
+    for (let page = 2; page <= lastPage; page++) {
+        tasks.push(async () => {
+            const doc = await fetchLetterboxdPage(`/${username}/watchlist/page/${page}/`, onProgress.wait);
+            onProgress.page();
+            return parseWatchlistPage(doc);
+        });
+    }
+    onProgress.total(lastPage);
+
+    const rest = await runWithConcurrency(tasks, 3);
+    return films.concat(...rest);
+}
+
+async function findWatchlistMatches(rawUser1, rawUser2) {
+    const result = document.getElementById("wl-result");
+    const submit = document.getElementById("wl-submit");
+    const users = [rawUser1, rawUser2].map(parseLetterboxdUsername);
+
+    if (users.some(u => !/^[a-z0-9_]{1,40}$/.test(u))) {
+        setWatchlistState(result, "[usernames can contain only letters, digits and _]", true);
+        return;
+    }
+
+    const requestId = ++watchlistRequestId;
+    submit.disabled = true;
+
+    let loadedPages = 0;
+    let totalPages = 0;
+    let rateLimited = false;
+    const totals = {};
+    const updateStatus = () => {
+        const progress = Object.keys(totals).length === users.length ? ` ${loadedPages}/${totalPages} pages` : "";
+        const waiting = rateLimited ? " — proxy rate limit, waiting..." : "";
+        setWatchlistState(result, `[loading watchlists...${progress}${waiting}]`);
+    };
+    const progressFor = (user) => ({
+        page: () => { loadedPages++; rateLimited = false; updateStatus(); },
+        total: (n) => { totals[user] = n; totalPages = Object.values(totals).reduce((a, b) => a + b, 0); updateStatus(); },
+        wait: () => { rateLimited = true; updateStatus(); }
+    });
+    updateStatus();
+
+    try {
+        const [list1, list2] = await Promise.all(users.map(u => fetchWatchlist(u, progressFor(u))));
+        if (requestId !== watchlistRequestId) return;
+
+        const emptyUser = users.find((u, i) => [list1, list2][i].length === 0);
+        if (emptyUser) {
+            setWatchlistState(result, `[watchlist of "${emptyUser}" is empty, private or user not found]`, true);
+            return;
+        }
+
+        const slugs2 = new Set(list2.map(f => f.slug));
+        watchlistMatches = shuffle(list1.filter(f => slugs2.has(f.slug)));
+        watchlistMatchIndex = 0;
+
+        if (watchlistMatches.length === 0) {
+            setWatchlistState(result, `[no common films — ${list1.length} vs ${list2.length} in watchlists]`);
+            return;
+        }
+
+        showWatchlistMatch();
+    } catch (error) {
+        console.error("Letterboxd watchlist error:", error);
+        if (requestId === watchlistRequestId) {
+            setWatchlistState(result, "[error loading watchlists from letterboxd — try again]", true);
+        }
+    } finally {
+        if (requestId === watchlistRequestId) submit.disabled = false;
+    }
+}
+
+// Принимает ник, @ник или ссылку вида https://letterboxd.com/ник/... и возвращает ник
+function parseLetterboxdUsername(input) {
+    return input.trim()
+        .replace(/^(https?:\/\/)?(www\.)?letterboxd\.com\//i, "")
+        .replace(/^@/, "")
+        .split(/[/?#]/)[0]
+        .toLowerCase();
+}
+
+function shuffle(items) {
+    for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items;
+}
+
+function setWatchlistState(container, text, isError = false) {
+    container.innerHTML = "";
+    const state = document.createElement("div");
+    state.className = isError ? "state-indicator state-error" : "state-indicator";
+    state.textContent = text;
+    container.appendChild(state);
+}
+
+async function fetchLetterboxdFilm(slug) {
+    if (letterboxdFilmCache.has(slug)) return letterboxdFilmCache.get(slug);
+
+    const doc = await fetchLetterboxdPage(`/film/${slug}/`);
+    const ldScript = doc.querySelector('script[type="application/ld+json"]');
+    // JSON-LD на Letterboxd обёрнут в /* <![CDATA[ */ ... /* ]]> */
+    const ld = ldScript ? JSON.parse(ldScript.textContent.replace(/\/\*[\s\S]*?\*\//g, "")) : {};
+
+    const film = {
+        title: ld.name || slug,
+        year: (doc.querySelector(".releasedate a, .releaseyear a")?.textContent || "").trim(),
+        poster: ld.image || "",
+        countries: (ld.countryOfOrigin || []).map(c => c.name).filter(Boolean),
+        rating: ld.aggregateRating?.ratingValue,
+        synopsis: doc.querySelector('meta[property="og:description"]')?.content || ""
+    };
+    letterboxdFilmCache.set(slug, film);
+    return film;
+}
+
+async function showWatchlistMatch() {
+    const result = document.getElementById("wl-result");
+    const match = watchlistMatches[watchlistMatchIndex];
+    const requestId = watchlistRequestId;
+
+    setWatchlistState(result, `[loading "${match.name}"...]`);
+
+    let film;
+    try {
+        film = await fetchLetterboxdFilm(match.slug);
+    } catch (error) {
+        console.error("Letterboxd film error:", error);
+        film = { title: match.name, poster: "", countries: [], synopsis: "" };
+    }
+    if (requestId !== watchlistRequestId || watchlistMatches[watchlistMatchIndex] !== match) return;
+
+    result.innerHTML = "";
+
+    const card = document.createElement("a");
+    card.className = "wl-film";
+    card.href = `https://letterboxd.com/film/${encodeURIComponent(match.slug)}/`;
+    card.target = "_blank";
+    card.rel = "noopener noreferrer";
+
+    const poster = document.createElement("div");
+    poster.className = "wl-poster";
+    if (film.poster) {
+        const img = document.createElement("img");
+        img.src = film.poster;
+        img.alt = `${film.title} poster`;
+        poster.appendChild(img);
+    }
+
+    const body = document.createElement("div");
+    body.className = "wl-film-body";
+
+    const title = document.createElement("h3");
+    title.className = "wl-film-title";
+    title.textContent = film.title;
+    if (film.year) {
+        const year = document.createElement("span");
+        year.className = "wl-film-year";
+        year.textContent = ` ${film.year}`;
+        title.appendChild(year);
+    }
+
+    const meta = document.createElement("div");
+    meta.className = "wl-film-meta";
+
+    const country = document.createElement("span");
+    country.textContent = film.countries.length ? film.countries.join(", ") : "unknown country";
+
+    const rating = document.createElement("span");
+    rating.className = "wl-film-rating";
+    rating.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`;
+    rating.append(typeof film.rating === "number" ? film.rating.toFixed(1) : "no rating");
+
+    meta.append(country, rating);
+
+    const synopsis = document.createElement("p");
+    synopsis.className = "wl-film-synopsis";
+    synopsis.textContent = film.synopsis || "No synopsis on Letterboxd.";
+
+    body.append(title, meta, synopsis);
+    card.append(poster, body);
+
+    const footer = document.createElement("div");
+    footer.className = "wl-footer";
+
+    const counter = document.createElement("span");
+    counter.className = "wl-counter";
+    counter.textContent = `match ${watchlistMatchIndex + 1} of ${watchlistMatches.length}`;
+
+    const pickButton = document.createElement("button");
+    pickButton.className = "changelog-toggle wl-pick";
+    pickButton.type = "button";
+    pickButton.textContent = "[ PICK ANOTHER FILM ]";
+    pickButton.disabled = watchlistMatches.length < 2;
+    pickButton.addEventListener("click", () => {
+        watchlistMatchIndex = (watchlistMatchIndex + 1) % watchlistMatches.length;
+        showWatchlistMatch();
+    });
+
+    footer.append(counter, pickButton);
+    result.append(card, footer);
 }

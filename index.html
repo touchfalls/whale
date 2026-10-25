@@ -52,6 +52,7 @@
                     <button class="nav-action-btn" data-target="server" id="btn-to-server">[server]</button>
                     <button class="nav-action-btn" data-target="proj" id="btn-to-proj">[proj]</button>
                     <button class="nav-action-btn" data-target="ses-pack" id="btn-to-ses-pack">[se's pack]</button>
+                    <button class="nav-action-btn" data-target="watchlist" id="btn-to-watchlist">[watchlist match]</button>
                 </div>
             </section>
 
@@ -149,6 +150,26 @@
                         <div class="state-indicator">[loading changelog...]</div>
                     </div>
                 </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- ЭКРАН 6: WATCHLIST MATCH (LETTERBOXD)      -->
+            <!-- ========================================== -->
+            <section class="view" id="view-watchlist" data-view="watchlist">
+                <div class="view-header">
+                    <button class="back-btn" data-target="home" aria-label="Вернуться назад">[ &larr; back ]</button>
+                    <h2 class="view-title">letterboxd watchlist match</h2>
+                </div>
+
+                <form class="wl-form" id="wl-form">
+                    <input class="wl-input" id="wl-user-1" name="user1" placeholder="letterboxd username #1"
+                        aria-label="Letterboxd username 1" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+                    <input class="wl-input" id="wl-user-2" name="user2" placeholder="letterboxd username #2"
+                        aria-label="Letterboxd username 2" autocomplete="off" autocapitalize="off" spellcheck="false" required>
+                    <button class="changelog-toggle" id="wl-submit" type="submit">[ find matches ]</button>
+                </form>
+
+                <div class="wl-result" id="wl-result" aria-live="polite"></div>
             </section>
 
         </main>
