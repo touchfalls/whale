@@ -17,12 +17,6 @@
     --status-offline: #FF3B30;
     --status-checking: #FFCC00;
 
-    /* Предыдущие шрифты (закомментированы по запросу) */
-    /*
-    --font-mono: 'JetBrains Mono', monospace;
-    --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-    */
-
     /* Шрифты в стиле рекламы Adobe (Adobe Source Sans 3 / Source Code Pro / Plus Jakarta Sans) */
     --font-sans: 'Source Sans 3', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
     --font-mono: 'Source Code Pro', 'JetBrains Mono', monospace;
@@ -241,25 +235,6 @@ button {
 /* ==========================================================================
    7. ЭКРАН 1: ГЛАВНАЯ (HOME VIEW)
    ========================================================================== */
-.terminal-header {
-    font-size: 1.05rem;
-    margin-bottom: 2rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-muted);
-}
-
-.prompt-symbol {
-    color: var(--status-online);
-    font-weight: 700;
-}
-
-.typed-title {
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
 .home-nav {
     display: flex;
     flex-direction: column;
@@ -416,10 +391,6 @@ button {
 
 .server-raw-line .label {
     color: var(--text-muted);
-}
-
-.server-raw-line .val {
-    color: var(--text-primary);
 }
 
 .status-badge {

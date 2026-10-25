@@ -6,9 +6,6 @@
  * Вы можете настраивать сайт без необходимости править логику ниже.
  */
 const CONFIG = {
-    // Текст/ник на главной странице
-    homeTitle: "touchfalls",
-
     // IP адрес Minecraft-сервера для экрана [server]
     // Сюда впишите ваш реальный адрес сервера (например: 'mc.hypixel.net' или 'play.myserver.ru')
     minecraftServerIP: "play.margoles.xyz",
@@ -96,12 +93,12 @@ function navigateTo(targetView) {
         targetView = "home";
     }
 
-    // Обновляем хэш в URL
+    // Смена хэша сама вызовет handleHashChange, рисуем напрямую только если хэш тот же
     if (window.location.hash !== `#${targetView}`) {
         window.location.hash = targetView;
+    } else {
+        renderView(targetView);
     }
-
-    renderView(targetView);
 }
 
 function renderView(viewName) {
@@ -144,14 +141,7 @@ function handleHashChange() {
  * ============================================================================
  */
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. Установка заголовка на главной
-    const titleEl = document.getElementById("home-title");
-    if (titleEl) titleEl.textContent = CONFIG.homeTitle;
-
-    // 2. Установка хоста сервера и ссылки на вайтлист
-    const hostEl = document.getElementById("mc-host-display");
-    if (hostEl) hostEl.textContent = CONFIG.minecraftServerIP;
-
+    // 1. Ссылка на вайтлист
     const whitelistEl = document.getElementById("whitelist-tg-link");
     if (whitelistEl) whitelistEl.href = CONFIG.whitelistTelegramUrl;
 
@@ -161,10 +151,10 @@ document.addEventListener("DOMContentLoaded", () => {
     const converterLinkEl = document.getElementById("pack-converter-link");
     if (converterLinkEl) converterLinkEl.href = CONFIG.mrpackConverterUrl;
 
-    // 3. Генерация плашек на экране [links]
+    // 2. Генерация плашек на экране [links]
     renderLinksList();
 
-    // 4. Привязка обработчиков клика для навигации
+    // 3. Привязка обработчиков клика для навигации
     setupNavigationListeners();
 
     // Changelog запрашивается только после явного нажатия на кнопку
@@ -172,7 +162,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupWatchlistMatch();
 
-    // 5. Обработка начального маршрута
+    // 4. Обработка начального маршрута
     window.addEventListener("hashchange", handleHashChange);
     handleHashChange();
 });
@@ -272,7 +262,6 @@ async function fetchMinecraftStatus() {
         if (!serverIp) {
             statusBadge.textContent = "[offline]";
             statusBadge.className = "status-badge status-offline";
-            isCheckingServer = false;
             return;
         }
 
@@ -361,29 +350,34 @@ async function fetchModrinthProjects() {
             projectCard.target = "_blank";
             projectCard.rel = "noopener noreferrer";
 
-            // Иконка проекта или fallback с первой буквой
-            const iconContent = project.icon_url
-                ? `<img src="${project.icon_url}" alt="${project.title} icon" loading="lazy" />`
-                : `<span class="project-fallback-icon">${(project.title || "P").charAt(0).toUpperCase()}</span>`;
-
-            // Форматирование количества скачиваний
-            const downloadsFormatted = formatDownloadsCount(project.downloads || 0);
-
+            // Статичный каркас; данные из API вставляются только через textContent/атрибуты
             projectCard.innerHTML = `
-                <div class="project-icon">
-                    ${iconContent}
-                </div>
+                <div class="project-icon"></div>
                 <div class="project-body">
                     <div class="project-head">
-                        <span class="project-name">${project.title || project.slug}</span>
+                        <span class="project-name"></span>
                         <span class="project-downloads">
                             <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>
-                            ${downloadsFormatted}
                         </span>
                     </div>
-                    <p class="project-summary">${project.description || "No description provided."}</p>
+                    <p class="project-summary"></p>
                 </div>
             `;
+
+            // Иконка проекта или fallback с первой буквой
+            const icon = document.createElement(project.icon_url ? "img" : "span");
+            if (project.icon_url) {
+                icon.src = project.icon_url;
+                icon.alt = `${project.title} icon`;
+                icon.loading = "lazy";
+            } else {
+                icon.className = "project-fallback-icon";
+                icon.textContent = (project.title || "P").charAt(0).toUpperCase();
+            }
+            projectCard.querySelector(".project-icon").appendChild(icon);
+            projectCard.querySelector(".project-name").textContent = project.title || project.slug;
+            projectCard.querySelector(".project-downloads").append(formatDownloadsCount(project.downloads || 0));
+            projectCard.querySelector(".project-summary").textContent = project.description || "No description provided.";
 
             container.appendChild(projectCard);
         });
@@ -752,10 +746,8 @@ async function fetchLetterboxdPage(path, onWait) {
             await sleep(15000);
             continue;
         }
-        // Несуществующий пользователь/фильм — пустая страница, дальше это покажется как «not found»
-        if (response.status === 404) {
-            return new DOMParser().parseFromString("", "text/html");
-        }
+        // Несуществующий пользователь/фильм
+        if (response.status === 404) return null;
         if (!response.ok) {
             throw new Error(`Letterboxd proxy responded with status ${response.status}`);
         }
@@ -787,6 +779,7 @@ function parseWatchlistPage(doc) {
 
 async function fetchWatchlist(username, onProgress) {
     const firstPage = await fetchLetterboxdPage(`/${username}/watchlist/`, onProgress.wait);
+    if (!firstPage) return null;
     const films = parseWatchlistPage(firstPage);
 
     const pageNumbers = [...firstPage.querySelectorAll(".paginate-page a")].map(a => parseInt(a.textContent, 10));
@@ -840,9 +833,15 @@ async function findWatchlistMatches(rawUser1, rawUser2) {
         const [list1, list2] = await Promise.all(users.map(u => fetchWatchlist(u, progressFor(u))));
         if (requestId !== watchlistRequestId) return;
 
-        const emptyUser = users.find((u, i) => [list1, list2][i].length === 0);
+        const lists = [list1, list2];
+        const missingUser = users.find((u, i) => lists[i] === null);
+        if (missingUser) {
+            setWatchlistState(result, `[letterboxd user "${missingUser}" not found]`, true);
+            return;
+        }
+        const emptyUser = users.find((u, i) => lists[i].length === 0);
         if (emptyUser) {
-            setWatchlistState(result, `[watchlist of "${emptyUser}" is empty, private or user not found]`, true);
+            setWatchlistState(result, `[watchlist of "${emptyUser}" is empty or private]`, true);
             return;
         }
 
@@ -895,6 +894,7 @@ async function fetchLetterboxdFilm(slug) {
     if (letterboxdFilmCache.has(slug)) return letterboxdFilmCache.get(slug);
 
     const doc = await fetchLetterboxdPage(`/film/${slug}/`);
+    if (!doc) throw new Error(`Letterboxd film "${slug}" not found`);
     const ldScript = doc.querySelector('script[type="application/ld+json"]');
     // JSON-LD на Letterboxd обёрнут в /* <![CDATA[ */ ... /* ]]> */
     const ld = ldScript ? JSON.parse(ldScript.textContent.replace(/\/\*[\s\S]*?\*\//g, "")) : {};

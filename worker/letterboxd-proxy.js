@@ -17,8 +17,8 @@ export default {
 
         const response = await fetch(`https://letterboxd.com${pathname}`, {
             headers: { "User-Agent": "Mozilla/5.0 (compatible; watchlist-match)" },
-            // Кэш на краю Cloudflare на час: повторные поиски не дёргают Letterboxd
-            cf: { cacheTtl: 3600, cacheEverything: true }
+            // Кэш на краю Cloudflare: watchlist меняется часто — 5 минут, страницы фильмов — час
+            cf: { cacheTtl: pathname.includes("/watchlist/") ? 300 : 3600, cacheEverything: true }
         });
 
         return new Response(response.body, {
