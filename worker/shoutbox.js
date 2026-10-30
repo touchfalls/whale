@@ -3,6 +3,8 @@
  * GET /        -> последние 50 сообщений
  * POST /       -> {nick, text, token} добавить сообщение
  * DELETE /<id> -> удалить (Authorization: Bearer ADMIN_TOKEN)
+ * POST /tg       -> вебхук Telegram: нажатие кнопки «delete» в уведомлении (только от TG_CHAT_ID)
+ * POST /tg-setup -> регистрирует вебхук в Telegram (Authorization: Bearer ADMIN_TOKEN), вызвать один раз после деплоя
  * Секреты: TURNSTILE_SECRET, ADMIN_TOKEN; TG_BOT_TOKEN и TG_CHAT_ID — по желанию, для уведомлений в Telegram.
  */
 const ORIGIN = "https://margoles.xyz";
@@ -23,6 +25,12 @@ async function sha256(str) {
     return [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, "0")).join("");
 }
 
+const tg = (env, method, body) => fetch(`https://api.telegram.org/bot${env.TG_BOT_TOKEN}/${method}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+});
+
 export default {
     async fetch(request, env, ctx) {
         if (request.method === "OPTIONS") return new Response(null, { headers: cors });
@@ -33,6 +41,37 @@ export default {
                 "SELECT id, nick, text, ts FROM shouts ORDER BY id DESC LIMIT 50"
             ).all();
             return reply(results);
+        }
+
+        if (request.method === "POST" && pathname === "/tg-setup") {
+            if (!env.ADMIN_TOKEN || request.headers.get("Authorization") !== `Bearer ${env.ADMIN_TOKEN}`) {
+                return reply({ error: "unauthorized" }, 401);
+            }
+            const res = await tg(env, "setWebhook", {
+                url: `${new URL(request.url).origin}/tg`,
+                secret_token: await sha256(env.ADMIN_TOKEN),
+                allowed_updates: ["callback_query"]
+            });
+            return reply(await res.json());
+        }
+
+        if (request.method === "POST" && pathname === "/tg") {
+            // Секрет вебхука выводится из ADMIN_TOKEN, поэтому чужой запрос сюда не пройдёт
+            if (!env.ADMIN_TOKEN || request.headers.get("X-Telegram-Bot-Api-Secret-Token") !== await sha256(env.ADMIN_TOKEN)) {
+                return reply({ error: "unauthorized" }, 401);
+            }
+            const q = (await request.json().catch(() => ({}))).callback_query;
+            const id = q?.data?.match(/^del:(\d+)$/)?.[1];
+            if (id && String(q.from?.id) === String(env.TG_CHAT_ID)) {
+                await env.DB.prepare("DELETE FROM shouts WHERE id = ?").bind(id).run();
+                await tg(env, "answerCallbackQuery", { callback_query_id: q.id, text: "deleted" });
+                await tg(env, "editMessageText", {
+                    chat_id: q.message.chat.id,
+                    message_id: q.message.message_id,
+                    text: `${q.message.text}\n\n[deleted]`
+                });
+            }
+            return reply({ ok: true });
         }
 
         if (request.method === "DELETE") {
@@ -78,10 +117,10 @@ export default {
 
             // Уведомление владельцу; без parse_mode, чтобы чужой текст не мог ничего разметить. Сбой Telegram не ломает публикацию
             if (env.TG_BOT_TOKEN && env.TG_CHAT_ID) {
-                ctx.waitUntil(fetch(`https://api.telegram.org/bot${env.TG_BOT_TOKEN}/sendMessage`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ chat_id: env.TG_CHAT_ID, text: `shoutbox #${id}\n${nick}: ${text}`, disable_web_page_preview: true })
+                ctx.waitUntil(tg(env, "sendMessage", {
+                    chat_id: env.TG_CHAT_ID,
+                    text: `shoutbox #${id}\n${nick}: ${text}`,
+                    reply_markup: { inline_keyboard: [[{ text: "delete", callback_data: `del:${id}` }]] }
                 }).catch(() => {}));
             }
             return reply({ ok: true }, 201);
