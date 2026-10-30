@@ -994,3 +994,41 @@ a.info-value:hover {
         animation: none;
     }
 }
+
+/* ==========================================================================
+   SHOUTBOX
+   ========================================================================== */
+.sb-list {
+    max-height: 240px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+    font-size: 13px;
+}
+
+.sb-item {
+    margin: 0 0 6px;
+    overflow-wrap: anywhere;
+}
+
+.sb-nick {
+    color: var(--accent);
+}
+
+.sb-time {
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.sb-form {
+    display: grid;
+    grid-template-columns: 110px 1fr auto;
+    gap: 8px;
+}
+
+.sb-form .btn {
+    width: auto;
+}
+
+.sb-form .cf-turnstile {
+    grid-column: 1 / -1;
+}

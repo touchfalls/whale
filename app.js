@@ -29,6 +29,10 @@ const CONFIG = {
     letterboxdUsername: "touchfalls",
     recentFilmsCount: 6,
 
+    // Cloudflare Worker из папки worker/ (shoutbox.js) и публичный ключ Turnstile для окна [shoutbox]
+    shoutboxApi: "https://shoutbox.margoles.workers.dev",
+    turnstileSiteKey: "0x4AAAAAAFtGdMckXwpC0pjR",
+
     // Репозиторий сайта на GitHub для окна [page info]
     githubRepo: "touchfalls/whale",
 
@@ -171,6 +175,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupPackChangelog();
 
     setupWatchlistMatch();
+    setupShoutbox();
 
     // 3. Старые ссылки вида margoles.xyz/#watchlist прокручивают к нужному окну
     const hashTarget = document.getElementById(`win-${window.location.hash.slice(1)}`);
@@ -1090,4 +1095,80 @@ async function fetchPageInfo() {
         row.append(labelEl, valueEl);
         container.appendChild(row);
     });
+}
+
+/**
+ * ============================================================================
+ * ОКНО [shoutbox]: СООБЩЕНИЯ ПОСЕТИТЕЛЕЙ (WORKER worker/shoutbox.js)
+ * ============================================================================
+ */
+function setupShoutbox() {
+    const form = document.getElementById("sb-form");
+    if (!form) return;
+    const list = document.getElementById("sb-list");
+    const errorEl = document.getElementById("sb-error");
+    const submit = document.getElementById("sb-submit");
+    let widgetId = null;
+
+    try { form.nick.value = localStorage.getItem("sb-nick") || ""; } catch { /* приватный режим */ }
+
+    async function load() {
+        try {
+            const res = await fetch(CONFIG.shoutboxApi, withTimeout());
+            if (!res.ok) throw new Error(res.status);
+            const shouts = await res.json();
+            list.replaceChildren(...shouts.reverse().map(s => {
+                const row = document.createElement("p");
+                row.className = "sb-item";
+                const nick = document.createElement("span");
+                nick.className = "sb-nick";
+                nick.textContent = s.nick;
+                const time = document.createElement("time");
+                time.className = "sb-time";
+                time.textContent = new Date(s.ts * 1000).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
+                // textContent, не innerHTML: ник и текст пишут посторонние
+                row.append(nick, ": ", s.text, " ", time);
+                return row;
+            }));
+            list.scrollTop = list.scrollHeight;
+        } catch {
+            list.textContent = "[unavailable]";
+        }
+    }
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errorEl.textContent = "";
+        const token = widgetId !== null ? window.turnstile.getResponse(widgetId) : "";
+        if (!token) { errorEl.textContent = "pass the captcha first"; return; }
+
+        submit.disabled = true;
+        try {
+            const res = await fetch(CONFIG.shoutboxApi, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ nick: form.nick.value, text: form.text.value, token }),
+                ...withTimeout()
+            });
+            if (!res.ok) throw new Error((await res.json()).error || res.status);
+            try { localStorage.setItem("sb-nick", form.nick.value); } catch { /* ок */ }
+            form.text.value = "";
+            await load();
+        } catch (err) {
+            errorEl.textContent = `failed: ${err.message}`;
+        } finally {
+            submit.disabled = false;
+            if (widgetId !== null) window.turnstile.reset(widgetId);
+        }
+    });
+
+    // Скрипт Turnstile грузится async — ждём его появления
+    const mount = setInterval(() => {
+        if (!window.turnstile) return;
+        clearInterval(mount);
+        if (CONFIG.turnstileSiteKey) widgetId = window.turnstile.render("#sb-captcha", { sitekey: CONFIG.turnstileSiteKey, theme: "dark" });
+    }, 200);
+
+    load();
+    setInterval(load, 30000);
 }

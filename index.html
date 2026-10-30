@@ -102,6 +102,25 @@
             <!-- ПРАВАЯ КОЛОНКА -->
             <div class="dash-col dash-col--right">
 
+                <!-- ОКНО: SHOUTBOX -->
+                <section class="win" id="win-shoutbox">
+                    <header class="win-head">
+                        <h2 class="win-title">shoutbox</h2>
+                    </header>
+                    <div class="win-body">
+                        <div class="sb-list" id="sb-list" aria-live="polite"></div>
+                        <form class="sb-form" id="sb-form">
+                            <input class="wl-input" name="nick" placeholder="nick" maxlength="20"
+                                aria-label="Nickname" autocomplete="nickname" required>
+                            <input class="wl-input" name="text" placeholder="message" maxlength="200"
+                                aria-label="Message" autocomplete="off" required>
+                            <button class="btn btn--accent" id="sb-submit" type="submit">send</button>
+                            <div class="cf-turnstile" id="sb-captcha"></div>
+                        </form>
+                        <p class="win-desc" id="sb-error" role="alert"></p>
+                    </div>
+                </section>
+
                 <!-- ОКНО: WATCHLIST MATCH (LETTERBOXD) -->
                 <section class="win" id="win-watchlist">
                     <header class="win-head">
@@ -150,6 +169,7 @@
         </div>
     </main>
 
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <script src="./app.js"></script>
 </body>
 

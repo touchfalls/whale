@@ -1,0 +1,8 @@
+name = "shoutbox"
+main = "shoutbox.js"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "shoutbox"
+database_id = "60a4c9b9-a271-45e4-a569-0aad8377bd1d"
