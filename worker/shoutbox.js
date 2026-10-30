@@ -3,7 +3,7 @@
  * GET /        -> последние 50 сообщений
  * POST /       -> {nick, text, token} добавить сообщение
  * DELETE /<id> -> удалить (Authorization: Bearer ADMIN_TOKEN)
- * Секреты: TURNSTILE_SECRET, ADMIN_TOKEN.
+ * Секреты: TURNSTILE_SECRET, ADMIN_TOKEN; TG_BOT_TOKEN и TG_CHAT_ID — по желанию, для уведомлений в Telegram.
  */
 const ORIGIN = "https://margoles.xyz";
 const MAX_NICK = 20;
@@ -24,7 +24,7 @@ async function sha256(str) {
 }
 
 export default {
-    async fetch(request, env) {
+    async fetch(request, env, ctx) {
         if (request.method === "OPTIONS") return new Response(null, { headers: cors });
         const { pathname } = new URL(request.url);
 
@@ -71,9 +71,19 @@ export default {
             ).bind(ipHash, now - COOLDOWN_S).first();
             if (recent) return reply({ error: "too fast" }, 429);
 
-            await env.DB.prepare(
+            const { meta } = await env.DB.prepare(
                 "INSERT INTO shouts (nick, text, ts, ip_hash) VALUES (?, ?, ?, ?)"
             ).bind(nick, text, now, ipHash).run();
+            const id = meta.last_row_id;
+
+            // Уведомление владельцу; без parse_mode, чтобы чужой текст не мог ничего разметить. Сбой Telegram не ломает публикацию
+            if (env.TG_BOT_TOKEN && env.TG_CHAT_ID) {
+                ctx.waitUntil(fetch(`https://api.telegram.org/bot${env.TG_BOT_TOKEN}/sendMessage`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ chat_id: env.TG_CHAT_ID, text: `shoutbox #${id}\n${nick}: ${text}`, disable_web_page_preview: true })
+                }).catch(() => {}));
+            }
             return reply({ ok: true }, 201);
         }
 
