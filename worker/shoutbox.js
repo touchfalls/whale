@@ -64,11 +64,11 @@ export default {
             const id = q?.data?.match(/^del:(\d+)$/)?.[1];
             if (id && String(q.from?.id) === String(env.TG_CHAT_ID)) {
                 await env.DB.prepare("DELETE FROM shouts WHERE id = ?").bind(id).run();
-                await tg(env, "answerCallbackQuery", { callback_query_id: q.id, text: "deleted" });
+                await tg(env, "answerCallbackQuery", { callback_query_id: q.id, text: "🗑 deleted" });
                 await tg(env, "editMessageText", {
                     chat_id: q.message.chat.id,
                     message_id: q.message.message_id,
-                    text: `${q.message.text}\n\n[deleted]`
+                    text: `${q.message.text}\n\n🗑 deleted`
                 });
             }
             return reply({ ok: true });
@@ -119,7 +119,7 @@ export default {
             if (env.TG_BOT_TOKEN && env.TG_CHAT_ID) {
                 ctx.waitUntil(tg(env, "sendMessage", {
                     chat_id: env.TG_CHAT_ID,
-                    text: `shoutbox #${id}\n${nick}: ${text}`,
+                    text: `📬 shoutbox #${id}\n\n👤 ${nick}\n💬 ${text}`,
                     reply_markup: { inline_keyboard: [[{ text: "delete", callback_data: `del:${id}` }]] }
                 }).catch(() => {}));
             }
