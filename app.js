@@ -23,14 +23,14 @@ const CONFIG = {
     mrpackConverterUrl: "https://mctoolbox.net/mrpack-to-zip",
 
     // Cloudflare Worker из папки worker/ — CORS-прокси для страниц Letterboxd в окне [watchlist match]
-    letterboxdProxy: "https://letterboxd-proxy.margoles.workers.dev",
+    letterboxdProxy: "https://letterboxd-proxy.curlz.xyz",
 
     // Чей дневник Letterboxd показывать в окне [recently watched] и сколько фильмов
     letterboxdUsername: "touchfalls",
     recentFilmsCount: 6,
 
     // Cloudflare Worker из папки worker/ (shoutbox.js) и публичный ключ Turnstile для окна [shoutbox]
-    shoutboxApi: "https://shoutbox.margoles.workers.dev",
+    shoutboxApi: "https://shoutbox.curlz.xyz",
     turnstileSiteKey: "0x4AAAAAAFtGdMckXwpC0pjR",
 
     // Репозиторий сайта на GitHub для окна [page info]
@@ -177,7 +177,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupWatchlistMatch();
     setupShoutbox();
 
-    // 3. Старые ссылки вида margoles.xyz/#watchlist прокручивают к нужному окну
+    // 3. Старые ссылки вида curlz.xyz/#watchlist прокручивают к нужному окну
     const hashTarget = document.getElementById(`win-${window.location.hash.slice(1)}`);
     if (hashTarget) hashTarget.scrollIntoView();
 });

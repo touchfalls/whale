@@ -2,7 +2,7 @@
 # Проверка, что worker отвечает и разметка Letterboxd не поменялась:
 # сайт ищет фильмы по data-item-slug, а рейтинг/страну/постер — в ld+json.
 # Запуск: sh worker/check.sh [адрес worker] [адрес shoutbox]
-W="${1:-https://letterboxd-proxy.margoles.workers.dev}"
+W="${1:-https://letterboxd-proxy.curlz.xyz}"
 fail=0
 
 check() {

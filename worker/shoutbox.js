@@ -7,7 +7,7 @@
  * POST /tg-setup -> регистрирует вебхук в Telegram (Authorization: Bearer ADMIN_TOKEN), вызвать один раз после деплоя
  * Секреты: TURNSTILE_SECRET, ADMIN_TOKEN; TG_BOT_TOKEN и TG_CHAT_ID — по желанию, для уведомлений в Telegram.
  */
-const ORIGIN = "https://margoles.xyz";
+const ORIGIN = "https://curlz.xyz";
 const MAX_NICK = 20;
 const MAX_TEXT = 200;
 const COOLDOWN_S = 10;
