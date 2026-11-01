@@ -1091,6 +1091,15 @@ async function fetchPageInfo() {
         console.error("GitHub API error:", error);
     }
 
+    try {
+        const res = await fetch(`${CONFIG.shoutboxApi}/hit`, { method: "POST", ...withTimeout() });
+        if (!res.ok) throw new Error(res.status);
+        const v = await res.json();
+        rows.push(["visitors", `${v.today} today · ${v.unique} total`], ["views", String(v.views)]);
+    } catch (error) {
+        console.error("visit stats error:", error);
+    }
+
     container.innerHTML = "";
     rows.forEach(([label, value, url]) => {
         const row = document.createElement("div");
@@ -1244,15 +1253,15 @@ function setupLetterbox() {
 
 /**
  * ============================================================================
- * ТЕМА: dark → light → pink → green (data-theme на <html>, выбор в localStorage)
+ * ТЕМА: dark ↔ light (data-theme на <html>, выбор в localStorage)
  * ============================================================================
  */
 function setupTheme() {
-    const themes = ["dark", "light", "pink", "green"];
+    const themes = ["dark", "light"];
     const btn = document.getElementById("theme-toggle");
     const root = document.documentElement;
-    let current = "dark";
-    try { current = localStorage.getItem("theme") || "dark"; } catch { /* приватный режим */ }
+    let current = window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+    try { current = localStorage.getItem("theme") || current; } catch { /* приватный режим */ }
     if (!themes.includes(current)) current = "dark";
     root.dataset.theme = current;
 

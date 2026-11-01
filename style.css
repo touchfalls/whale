@@ -19,9 +19,9 @@
     --bad: #f04040;
 
     /* Едва заметные рамки окон */
-    --edge-0: rgba(255, 255, 255, 0.04);
-    --edge-1: rgba(255, 255, 255, 0.07);
-    --edge-2: rgba(255, 255, 255, 0.12);
+    --edge-0: rgb(var(--ov) / 0.04);
+    --edge-1: rgb(var(--ov) / 0.07);
+    --edge-2: rgb(var(--ov) / 0.12);
 
     --radius: 8px;
     --left-col: 380px;
@@ -30,6 +30,7 @@
     --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
     --transition-fast: 0.15s ease;
+    --ov: 255 255 255; /* цвет полупрозрачных подложек: белый на тёмной теме */
 }
 
 /* ==========================================================================
@@ -104,7 +105,7 @@ img {
    4. ОКНО: ШАПКА С ТОЧКАМИ, СВЁРНУТОЕ И РАСКРЫТОЕ СОСТОЯНИЕ
    ========================================================================== */
 .win {
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.004), var(--bg-3));
+    background: linear-gradient(180deg, rgb(var(--ov) / 0.004), var(--bg-3));
     border: 1px solid var(--edge-0);
     border-radius: var(--radius);
     padding: 6px 6px 0;
@@ -143,7 +144,7 @@ img {
     min-height: 30px;
     padding: 6px 54px;
     border-radius: 6px;
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.2));
+    background: linear-gradient(180deg, rgb(var(--ov) / 0.02), rgba(0, 0, 0, 0.2));
     box-shadow: inset 0 -1px 0 var(--edge-0);
 }
 
@@ -215,7 +216,7 @@ body.has-expanded::before {
     position: fixed;
     inset: 0;
     z-index: 90;
-    background: rgba(2, 3, 4, 0.88);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
 }
 
 .win.is-expanded {
@@ -247,7 +248,7 @@ body.has-expanded::before {
     padding: 0 14px;
     border: 1px solid var(--edge-1);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.03);
+    background: rgb(var(--ov) / 0.03);
     color: var(--ink);
     font-size: 13px;
     font-weight: 600;
@@ -255,7 +256,7 @@ body.has-expanded::before {
 }
 
 .btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgb(var(--ov) / 0.07);
     border-color: var(--edge-2);
 }
 
@@ -297,7 +298,7 @@ body.has-expanded::before {
     gap: 12px;
     padding: 8px 10px;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.02);
+    background: rgb(var(--ov) / 0.02);
     font-size: 13px;
 }
 
@@ -373,7 +374,7 @@ a.info-value:hover {
     width: 44px;
     height: 44px;
     border-radius: 10px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.03));
+    background: linear-gradient(135deg, rgb(var(--ov) / 0.06), rgb(var(--ov) / 0.03));
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
     color: var(--ink-2);
     transition: transform var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
@@ -422,7 +423,7 @@ a.info-value:hover {
     padding: 12px;
     border: 1px solid var(--edge-0);
     border-radius: var(--radius);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), var(--bg-2));
+    background: linear-gradient(180deg, rgb(var(--ov) / 0.01), var(--bg-2));
     color: inherit;
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
@@ -438,7 +439,7 @@ a.info-value:hover {
     height: 44px;
     overflow: hidden;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgb(var(--ov) / 0.04);
     display: grid;
     place-items: center;
 }
@@ -520,14 +521,14 @@ a.info-value:hover {
     padding: 10px 12px;
     border: 1px solid var(--edge-0);
     border-radius: var(--radius);
-    background: rgba(255, 255, 255, 0.02);
+    background: rgb(var(--ov) / 0.02);
     color: inherit;
     transition: border-color var(--transition-fast), background var(--transition-fast);
 }
 
 .pack-link:hover {
     border-color: var(--edge-2);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgb(var(--ov) / 0.05);
 }
 
 .pack-link--modrinth {
@@ -569,7 +570,7 @@ a.info-value:hover {
 }
 
 .changelog-toggle[aria-expanded="true"] {
-    background: rgba(255, 255, 255, 0.07);
+    background: rgb(var(--ov) / 0.07);
     border-color: var(--edge-2);
 }
 
@@ -595,7 +596,7 @@ a.info-value:hover {
 }
 
 .changelog-panel::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.12);
+    background: rgb(var(--ov) / 0.12);
     border-radius: 4px;
 }
 
@@ -672,7 +673,7 @@ a.info-value:hover {
     padding: 1px 6px;
     border: 1px solid var(--edge-1);
     border-radius: 4px;
-    background: rgba(255, 255, 255, 0.025);
+    background: rgb(var(--ov) / 0.025);
     font-family: var(--mono);
 }
 
@@ -785,7 +786,7 @@ a.info-value:hover {
     padding: 0 12px;
     border: 1px solid var(--edge-1);
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.025);
+    background: rgb(var(--ov) / 0.025);
     color: var(--ink);
     font-family: var(--font);
     font-size: 13px;
@@ -799,7 +800,7 @@ a.info-value:hover {
 
 .wl-input:focus {
     border-color: var(--accent);
-    background: rgba(255, 255, 255, 0.05);
+    background: rgb(var(--ov) / 0.05);
 }
 
 .wl-film {
@@ -808,7 +809,7 @@ a.info-value:hover {
     padding: 12px;
     border: 1px solid var(--edge-0);
     border-radius: var(--radius);
-    background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), var(--bg-2));
+    background: linear-gradient(180deg, rgb(var(--ov) / 0.01), var(--bg-2));
     color: inherit;
     animation: winIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
     transition: border-color var(--transition-fast);
@@ -824,7 +825,7 @@ a.info-value:hover {
     aspect-ratio: 2 / 3;
     overflow: hidden;
     border-radius: 6px;
-    background: rgba(255, 255, 255, 0.04);
+    background: rgb(var(--ov) / 0.04);
     box-shadow: inset 0 0 0 1px var(--edge-0);
 }
 
@@ -1085,13 +1086,12 @@ a.info-value:hover {
     --ink-2: #3a4450;
     --muted: #5d6874;
     --accent: #1a6fd6;
+    --ov: 0 0 0;
     --edge-0: rgba(0, 0, 0, 0.05);
     --edge-1: rgba(0, 0, 0, 0.1);
     --edge-2: rgba(0, 0, 0, 0.18);
 }
 
-:root[data-theme="pink"] { --accent: #ff6fb5; }
-:root[data-theme="green"] { --accent: #3ddc84; }
 
 .whale-rain {
     position: fixed;

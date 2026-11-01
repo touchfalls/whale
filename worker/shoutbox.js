@@ -4,6 +4,7 @@
  * POST /       -> {nick, text, token} добавить сообщение
  * DELETE /<id> -> удалить (Authorization: Bearer ADMIN_TOKEN)
  * POST /letterbox -> {text, token} приватное сообщение владельцу в Telegram (не хранится)
+ * POST /hit      -> учесть визит (хеш IP, раз в сутки на посетителя) и вернуть статистику {today, unique, views}
  * POST /tg       -> вебхук Telegram: нажатие кнопки «delete» в уведомлении (только от TG_CHAT_ID)
  * POST /tg-setup -> регистрирует вебхук в Telegram (Authorization: Bearer ADMIN_TOKEN), вызвать один раз после деплоя
  * Секреты: TURNSTILE_SECRET, ADMIN_TOKEN; TG_BOT_TOKEN и TG_CHAT_ID — по желанию, для уведомлений в Telegram.
@@ -84,6 +85,19 @@ export default {
             if (!id) return reply({ error: "bad id" }, 400);
             await env.DB.prepare("DELETE FROM shouts WHERE id = ?").bind(id).run();
             return reply({ ok: true });
+        }
+
+        if (request.method === "POST" && pathname === "/hit") {
+            const ip = request.headers.get("CF-Connecting-IP") || "";
+            const day = new Date().toISOString().slice(0, 10);
+            await env.DB.prepare(
+                "INSERT INTO visits (day, ip_hash, hits) VALUES (?, ?, 1) ON CONFLICT (day, ip_hash) DO UPDATE SET hits = hits + 1"
+            ).bind(day, await sha256(ip + env.ADMIN_TOKEN)).run();
+            const stats = await env.DB.prepare(
+                "SELECT COUNT(DISTINCT ip_hash) AS unique_total, SUM(hits) AS views, " +
+                "COUNT(DISTINCT CASE WHEN day = ? THEN ip_hash END) AS today FROM visits"
+            ).bind(day).first();
+            return reply({ today: stats.today, unique: stats.unique_total, views: stats.views });
         }
 
         if (request.method === "POST" && pathname === "/letterbox") {
