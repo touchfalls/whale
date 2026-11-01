@@ -27,7 +27,7 @@ const CONFIG = {
 
     // Чей дневник Letterboxd показывать в окне [recently watched] и сколько фильмов
     letterboxdUsername: "touchfalls",
-    recentFilmsCount: 6,
+    recentFilmsCount: 5,
 
     // Cloudflare Worker из папки worker/ (shoutbox.js) и публичный ключ Turnstile для окна [shoutbox]
     shoutboxApi: "https://shoutbox.curlz.xyz",
