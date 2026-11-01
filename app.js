@@ -176,6 +176,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     setupWatchlistMatch();
     setupShoutbox();
+    setupLetterbox();
+    setupTheme();
+    setupKonami();
 
     // 3. Старые ссылки вида curlz.xyz/#watchlist прокручивают к нужному окну
     const hashTarget = document.getElementById(`win-${window.location.hash.slice(1)}`);
@@ -286,6 +289,20 @@ async function fetchMinecraftStatus() {
                 statusBadge.textContent = `[online]`;
             }
             statusBadge.className = "status-badge status-online";
+
+            // Список игроков есть только у Java и только если сервер его отдаёт
+            const playersEl = document.getElementById("mc-players");
+            if (playersEl) {
+                playersEl.replaceChildren(...(data.players?.list || []).map(p => {
+                    const img = document.createElement("img");
+                    img.src = `https://mc-heads.net/avatar/${encodeURIComponent(p.uuid || p.name_clean)}/24`;
+                    img.alt = p.name_clean;
+                    img.title = p.name_clean;
+                    img.width = img.height = 24;
+                    img.loading = "lazy";
+                    return img;
+                }));
+            }
         } else {
             statusBadge.textContent = "[offline]";
             statusBadge.className = "status-badge status-offline";
@@ -1112,6 +1129,13 @@ function setupShoutbox() {
 
     try { form.nick.value = localStorage.getItem("sb-nick") || ""; } catch { /* приватный режим */ }
 
+    const countEl = document.getElementById("sb-count");
+    const updateCount = () => {
+        countEl.textContent = `nick ${form.nick.value.length}/${form.nick.maxLength} · message ${form.text.value.length}/${form.text.maxLength}`;
+    };
+    form.addEventListener("input", updateCount);
+    updateCount();
+
     async function load() {
         try {
             const res = await fetch(CONFIG.shoutboxApi, withTimeout());
@@ -1153,6 +1177,7 @@ function setupShoutbox() {
             if (!res.ok) throw new Error((await res.json()).error || res.status);
             try { localStorage.setItem("sb-nick", form.nick.value); } catch { /* ок */ }
             form.text.value = "";
+            updateCount();
             await load();
         } catch (err) {
             errorEl.textContent = `failed: ${err.message}`;
@@ -1171,4 +1196,93 @@ function setupShoutbox() {
 
     load();
     setInterval(load, 30000);
+}
+
+/**
+ * ============================================================================
+ * ОКНО [letterbox]: ПРИВАТНОЕ СООБЩЕНИЕ ВЛАДЕЛЬЦУ В TELEGRAM (WORKER /letterbox)
+ * ============================================================================
+ */
+function setupLetterbox() {
+    const form = document.getElementById("lb-form");
+    if (!form) return;
+    const status = document.getElementById("lb-status");
+    const submit = document.getElementById("lb-submit");
+    let widgetId = null;
+
+    form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        status.textContent = "";
+        const token = widgetId !== null ? window.turnstile.getResponse(widgetId) : "";
+        if (!token) { status.textContent = "pass the captcha first"; return; }
+
+        submit.disabled = true;
+        try {
+            const res = await fetch(`${CONFIG.shoutboxApi}/letterbox`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ text: form.text.value, token }),
+                ...withTimeout()
+            });
+            if (!res.ok) throw new Error((await res.json()).error || res.status);
+            form.text.value = "";
+            status.textContent = "sent ✓";
+        } catch (err) {
+            status.textContent = `failed: ${err.message}`;
+        } finally {
+            submit.disabled = false;
+            if (widgetId !== null) window.turnstile.reset(widgetId);
+        }
+    });
+
+    const mount = setInterval(() => {
+        if (!window.turnstile) return;
+        clearInterval(mount);
+        if (CONFIG.turnstileSiteKey) widgetId = window.turnstile.render("#lb-captcha", { sitekey: CONFIG.turnstileSiteKey, theme: "dark" });
+    }, 200);
+}
+
+/**
+ * ============================================================================
+ * ТЕМА: dark → light → pink → green (data-theme на <html>, выбор в localStorage)
+ * ============================================================================
+ */
+function setupTheme() {
+    const themes = ["dark", "light", "pink", "green"];
+    const btn = document.getElementById("theme-toggle");
+    const root = document.documentElement;
+    let current = "dark";
+    try { current = localStorage.getItem("theme") || "dark"; } catch { /* приватный режим */ }
+    if (!themes.includes(current)) current = "dark";
+    root.dataset.theme = current;
+
+    btn?.addEventListener("click", () => {
+        current = themes[(themes.indexOf(current) + 1) % themes.length];
+        root.dataset.theme = current;
+        try { localStorage.setItem("theme", current); } catch { /* ок */ }
+    });
+}
+
+/**
+ * ============================================================================
+ * ПАСХАЛКА: Konami code запускает дождь из китов
+ * ============================================================================
+ */
+function setupKonami() {
+    const code = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight", "b", "a"];
+    let pos = 0;
+    document.addEventListener("keydown", (e) => {
+        pos = e.key === code[pos] ? pos + 1 : (e.key === code[0] ? 1 : 0);
+        if (pos < code.length) return;
+        pos = 0;
+        for (let i = 0; i < 30; i++) {
+            const whale = document.createElement("span");
+            whale.className = "whale-rain";
+            whale.textContent = "🐋";
+            whale.style.left = `${Math.random() * 100}vw`;
+            whale.style.animationDelay = `${Math.random() * 1.5}s`;
+            whale.addEventListener("animationend", () => whale.remove());
+            document.body.append(whale);
+        }
+    });
 }

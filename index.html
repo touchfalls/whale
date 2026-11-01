@@ -48,6 +48,7 @@
                                 <span id="mc-status" class="status-badge status-checking">[checking...]</span>
                             </div>
                         </div>
+                        <div class="mc-players" id="mc-players"></div>
                         <a href="#" id="whitelist-tg-link" class="btn btn--accent" target="_blank"
                             rel="noopener noreferrer">apply for whitelist via telegram ↗</a>
                     </div>
@@ -117,7 +118,25 @@
                             <button class="btn btn--accent" id="sb-submit" type="submit">send</button>
                             <div class="cf-turnstile" id="sb-captcha"></div>
                         </form>
+                        <p class="win-desc" id="sb-count"></p>
                         <p class="win-desc" id="sb-error" role="alert"></p>
+                    </div>
+                </section>
+
+                <!-- ОКНО: LETTERBOX (ПРИВАТНОЕ СООБЩЕНИЕ ВЛАДЕЛЬЦУ В TELEGRAM) -->
+                <section class="win" id="win-letterbox">
+                    <header class="win-head">
+                        <h2 class="win-title">letterbox</h2>
+                    </header>
+                    <div class="win-body">
+                        <p class="win-desc">anonymous private message, goes straight to my telegram and is not shown here</p>
+                        <form class="lb-form" id="lb-form">
+                            <textarea class="wl-input" name="text" placeholder="say something :3" maxlength="500"
+                                aria-label="Private message" rows="3" required></textarea>
+                            <button class="btn btn--accent" id="lb-submit" type="submit">send</button>
+                            <div class="cf-turnstile" id="lb-captcha"></div>
+                        </form>
+                        <p class="win-desc" id="lb-status" role="status"></p>
                     </div>
                 </section>
 
@@ -168,6 +187,8 @@
 
         </div>
     </main>
+
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch theme" title="theme">◐</button>
 
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <script src="./app.js"></script>

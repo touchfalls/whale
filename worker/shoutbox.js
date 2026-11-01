@@ -3,6 +3,7 @@
  * GET /        -> последние 50 сообщений
  * POST /       -> {nick, text, token} добавить сообщение
  * DELETE /<id> -> удалить (Authorization: Bearer ADMIN_TOKEN)
+ * POST /letterbox -> {text, token} приватное сообщение владельцу в Telegram (не хранится)
  * POST /tg       -> вебхук Telegram: нажатие кнопки «delete» в уведомлении (только от TG_CHAT_ID)
  * POST /tg-setup -> регистрирует вебхук в Telegram (Authorization: Bearer ADMIN_TOKEN), вызвать один раз после деплоя
  * Секреты: TURNSTILE_SECRET, ADMIN_TOKEN; TG_BOT_TOKEN и TG_CHAT_ID — по желанию, для уведомлений в Telegram.
@@ -10,6 +11,7 @@
 const ORIGIN = "https://curlz.xyz";
 const MAX_NICK = 20;
 const MAX_TEXT = 200;
+const MAX_LETTER = 500;
 const COOLDOWN_S = 10;
 
 const cors = {
@@ -82,6 +84,28 @@ export default {
             if (!id) return reply({ error: "bad id" }, 400);
             await env.DB.prepare("DELETE FROM shouts WHERE id = ?").bind(id).run();
             return reply({ ok: true });
+        }
+
+        if (request.method === "POST" && pathname === "/letterbox") {
+            if (!env.TURNSTILE_SECRET || !env.TG_BOT_TOKEN || !env.TG_CHAT_ID) return reply({ error: "not configured" }, 500);
+            let data;
+            try { data = await request.json(); } catch { return reply({ error: "bad json" }, 400); }
+            const text = typeof data.text === "string" ? data.text.trim() : "";
+            if (!text || text.length > MAX_LETTER) return reply({ error: "bad text" }, 400);
+
+            const check = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+                method: "POST",
+                body: new URLSearchParams({
+                    secret: env.TURNSTILE_SECRET,
+                    response: String(data.token || ""),
+                    remoteip: request.headers.get("CF-Connecting-IP") || ""
+                })
+            });
+            if (!(await check.json()).success) return reply({ error: "captcha failed" }, 403);
+
+            // Ждём ответа Telegram: письмо нигде не хранится, потерять его молча нельзя
+            const sent = await tg(env, "sendMessage", { chat_id: env.TG_CHAT_ID, text: `💌 letterbox\n\n${text}` });
+            return sent.ok ? reply({ ok: true }, 201) : reply({ error: "delivery failed" }, 502);
         }
 
         if (request.method === "POST" && pathname === "/") {
