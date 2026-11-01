@@ -11,7 +11,9 @@
     <link rel="icon" type="image/png" href="./favicon.png">
     <link rel="apple-touch-icon" href="./favicon.png">
 
-    <!-- Стили (шрифты системные, как в оформлении-образце) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="./style.css">
 </head>
 
@@ -19,24 +21,15 @@
     <!-- Дашборд: все экраны сайта — окна в двух колонках.
          Кнопки-точки в шапке каждого окна добавляет app.js (свернуть / раскрыть). -->
     <main class="container">
+        <!-- Ссылки: иконки в шапке; плитки генерирует app.js из CONFIG.socials -->
+        <nav class="topbar" aria-label="Links">
+            <div class="links-list" id="links-container"></div>
+        </nav>
+
+        <!-- Все разделы — карточки в одной колонке -->
         <div class="dash">
 
-            <!-- ЛЕВАЯ КОЛОНКА -->
-            <div class="dash-col dash-col--left">
-
-                <!-- ОКНО: LINKS (SOCIALS & CONTACTS) -->
-                <section class="win" id="win-links">
-                    <header class="win-head">
-                        <h2 class="win-title">links</h2>
-                    </header>
-                    <div class="win-body">
-                        <!-- Плашки генерируются скриптом app.js из объекта CONFIG -->
-                        <div class="links-list" id="links-container"></div>
-                    </div>
-                </section>
-
-                <!-- ОКНО: SERVER (MINECRAFT STATUS) -->
-                <section class="win" id="win-server">
+            <section class="win" id="win-server">
                     <header class="win-head">
                         <h2 class="win-title">server</h2>
                     </header>
@@ -54,8 +47,83 @@
                     </div>
                 </section>
 
-                <!-- ОКНО: SE'S PACK -->
-                <section class="win" id="win-ses-pack">
+            <section class="win" id="win-shoutbox">
+                    <header class="win-head">
+                        <h2 class="win-title">shoutbox</h2>
+                    </header>
+                    <div class="win-body">
+                        <div class="sb-list" id="sb-list" aria-live="polite"></div>
+                        <form class="sb-form" id="sb-form">
+                            <input class="wl-input" name="nick" placeholder="nick" maxlength="20"
+                                aria-label="Nickname" autocomplete="nickname" required>
+                            <input class="wl-input" name="text" placeholder="message" maxlength="200"
+                                aria-label="Message" autocomplete="off" required>
+                            <button class="btn btn--accent" id="sb-submit" type="submit">send</button>
+                            <div class="cf-turnstile" id="sb-captcha"></div>
+                        </form>
+                        <p class="win-desc" id="sb-count"></p>
+                        <p class="win-desc" id="sb-error" role="alert"></p>
+                    </div>
+                </section>
+
+            <section class="win" id="win-letterbox">
+                    <header class="win-head">
+                        <h2 class="win-title">letterbox</h2>
+                    </header>
+                    <div class="win-body">
+                        <p class="win-desc">anonymous private message, goes straight to my telegram and is not shown here</p>
+                        <form class="lb-form" id="lb-form">
+                            <textarea class="wl-input" name="text" placeholder="say something :3" maxlength="500"
+                                aria-label="Private message" rows="3" required></textarea>
+                            <button class="btn btn--accent" id="lb-submit" type="submit">send</button>
+                            <div class="cf-turnstile" id="lb-captcha"></div>
+                        </form>
+                        <p class="win-desc" id="lb-status" role="status"></p>
+                    </div>
+                </section>
+
+            <section class="win" id="win-watchlist">
+                    <header class="win-head">
+                        <h2 class="win-title">letterboxd watchlist match</h2>
+                    </header>
+                    <div class="win-body">
+                        <form class="wl-form" id="wl-form">
+                            <input class="wl-input" id="wl-user-1" name="user1" placeholder="letterboxd username #1"
+                                aria-label="Letterboxd username 1" autocomplete="off" autocapitalize="off"
+                                spellcheck="false" required>
+                            <input class="wl-input" id="wl-user-2" name="user2" placeholder="letterboxd username #2"
+                                aria-label="Letterboxd username 2" autocomplete="off" autocapitalize="off"
+                                spellcheck="false" required>
+                            <button class="btn btn--accent" id="wl-submit" type="submit">find matches</button>
+                        </form>
+
+                        <div class="wl-result" id="wl-result" aria-live="polite"></div>
+                    </div>
+                </section>
+
+            <section class="win" id="win-recent">
+                    <header class="win-head">
+                        <h2 class="win-title">recently watched</h2>
+                    </header>
+                    <div class="win-body">
+                        <div class="recent-grid" id="recent-container">
+                            <div class="state-indicator">[loading diary...]</div>
+                        </div>
+                    </div>
+                </section>
+
+            <section class="win" id="win-proj">
+                    <header class="win-head">
+                        <h2 class="win-title">modrinth projects</h2>
+                    </header>
+                    <div class="win-body">
+                        <div class="projects-container" id="projects-container">
+                            <div class="state-indicator">[loading projects...]</div>
+                        </div>
+                    </div>
+                </section>
+
+            <section class="win" id="win-ses-pack">
                     <header class="win-head">
                         <h2 class="win-title">se's pack</h2>
                     </header>
@@ -87,8 +155,7 @@
                     </div>
                 </section>
 
-                <!-- ОКНО: PAGE INFO (ПОСЛЕДНИЙ КОММИТ С GITHUB) -->
-                <section class="win" id="win-info">
+            <section class="win" id="win-info">
                     <header class="win-head">
                         <h2 class="win-title">page info</h2>
                     </header>
@@ -98,92 +165,6 @@
                         </div>
                     </div>
                 </section>
-            </div>
-
-            <!-- ПРАВАЯ КОЛОНКА -->
-            <div class="dash-col dash-col--right">
-
-                <!-- ОКНО: SHOUTBOX -->
-                <section class="win" id="win-shoutbox">
-                    <header class="win-head">
-                        <h2 class="win-title">shoutbox</h2>
-                    </header>
-                    <div class="win-body">
-                        <div class="sb-list" id="sb-list" aria-live="polite"></div>
-                        <form class="sb-form" id="sb-form">
-                            <input class="wl-input" name="nick" placeholder="nick" maxlength="20"
-                                aria-label="Nickname" autocomplete="nickname" required>
-                            <input class="wl-input" name="text" placeholder="message" maxlength="200"
-                                aria-label="Message" autocomplete="off" required>
-                            <button class="btn btn--accent" id="sb-submit" type="submit">send</button>
-                            <div class="cf-turnstile" id="sb-captcha"></div>
-                        </form>
-                        <p class="win-desc" id="sb-count"></p>
-                        <p class="win-desc" id="sb-error" role="alert"></p>
-                    </div>
-                </section>
-
-                <!-- ОКНО: LETTERBOX (ПРИВАТНОЕ СООБЩЕНИЕ ВЛАДЕЛЬЦУ В TELEGRAM) -->
-                <section class="win" id="win-letterbox">
-                    <header class="win-head">
-                        <h2 class="win-title">letterbox</h2>
-                    </header>
-                    <div class="win-body">
-                        <p class="win-desc">anonymous private message, goes straight to my telegram and is not shown here</p>
-                        <form class="lb-form" id="lb-form">
-                            <textarea class="wl-input" name="text" placeholder="say something :3" maxlength="500"
-                                aria-label="Private message" rows="3" required></textarea>
-                            <button class="btn btn--accent" id="lb-submit" type="submit">send</button>
-                            <div class="cf-turnstile" id="lb-captcha"></div>
-                        </form>
-                        <p class="win-desc" id="lb-status" role="status"></p>
-                    </div>
-                </section>
-
-                <!-- ОКНО: WATCHLIST MATCH (LETTERBOXD) -->
-                <section class="win" id="win-watchlist">
-                    <header class="win-head">
-                        <h2 class="win-title">letterboxd watchlist match</h2>
-                    </header>
-                    <div class="win-body">
-                        <form class="wl-form" id="wl-form">
-                            <input class="wl-input" id="wl-user-1" name="user1" placeholder="letterboxd username #1"
-                                aria-label="Letterboxd username 1" autocomplete="off" autocapitalize="off"
-                                spellcheck="false" required>
-                            <input class="wl-input" id="wl-user-2" name="user2" placeholder="letterboxd username #2"
-                                aria-label="Letterboxd username 2" autocomplete="off" autocapitalize="off"
-                                spellcheck="false" required>
-                            <button class="btn btn--accent" id="wl-submit" type="submit">find matches</button>
-                        </form>
-
-                        <div class="wl-result" id="wl-result" aria-live="polite"></div>
-                    </div>
-                </section>
-
-                <!-- ОКНО: RECENTLY WATCHED (RSS ДНЕВНИКА LETTERBOXD) -->
-                <section class="win" id="win-recent">
-                    <header class="win-head">
-                        <h2 class="win-title">recently watched</h2>
-                    </header>
-                    <div class="win-body">
-                        <div class="recent-grid" id="recent-container">
-                            <div class="state-indicator">[loading diary...]</div>
-                        </div>
-                    </div>
-                </section>
-
-                <!-- ОКНО: PROJ (MODRINTH PROJECTS) -->
-                <section class="win" id="win-proj">
-                    <header class="win-head">
-                        <h2 class="win-title">modrinth projects</h2>
-                    </header>
-                    <div class="win-body">
-                        <div class="projects-container" id="projects-container">
-                            <div class="state-indicator">[loading projects...]</div>
-                        </div>
-                    </div>
-                </section>
-            </div>
 
         </div>
     </main>

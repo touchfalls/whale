@@ -3,30 +3,30 @@
    ========================================================================== */
 :root {
     /* Фон и поверхности */
-    --bg: #020304;
-    --bg-2: #050709;
-    --bg-3: #08090c;
+    --bg: #0e1014;
+    --bg-2: #161a20;
+    --bg-3: #161a20;
 
     /* Текст */
-    --ink: #e8eef5;
-    --ink-2: #a8b4c0;
-    --muted: #8b949e;
+    --ink: #eceff4;
+    --ink-2: #b4bcc8;
+    --muted: #8a93a1;
 
     /* Акценты и статусы */
     --accent: #4d9fff;
-    --good: #10d060;
+    --good: #3ddc84;
     --warn: #f0b020;
-    --bad: #f04040;
+    --bad: #f45b5b;
 
-    /* Едва заметные рамки окон */
-    --edge-0: rgb(var(--ov) / 0.04);
-    --edge-1: rgb(var(--ov) / 0.07);
-    --edge-2: rgb(var(--ov) / 0.12);
+    /* Рамки карточек */
+    --edge-0: rgba(255, 255, 255, 0.06);
+    --edge-1: rgba(255, 255, 255, 0.1);
+    --edge-2: rgba(255, 255, 255, 0.16);
 
-    --radius: 8px;
-    --left-col: 380px;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.25), 0 8px 24px rgba(0, 0, 0, 0.18);
 
-    --font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
     --transition-fast: 0.15s ease;
@@ -79,52 +79,44 @@ img {
 }
 
 /* ==========================================================================
-   3. ДАШБОРД: ДВЕ КОЛОНКИ ОКОН
+   3. СТРАНИЦА: ОДНА УЗКАЯ КОЛОНКА КАРТОЧЕК
    ========================================================================== */
 .container {
-    max-width: 1280px;
+    max-width: 680px;
     margin: 0 auto;
-    padding: 24px clamp(12px, 3vw, 28px) 48px;
+    padding: 32px 16px 72px;
+}
+
+.topbar {
+    margin-bottom: 20px;
+}
+
+.topbar .links-list {
+    justify-content: center;
 }
 
 .dash {
-    display: grid;
-    grid-template-columns: var(--left-col) minmax(0, 1fr);
-    gap: 12px;
-    align-items: start;
-}
-
-.dash-col {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    min-width: 0;
+    gap: 16px;
 }
 
 /* ==========================================================================
-   4. ОКНО: ШАПКА С ТОЧКАМИ, СВЁРНУТОЕ И РАСКРЫТОЕ СОСТОЯНИЕ
+   4. КАРТОЧКА
    ========================================================================== */
 .win {
-    background: linear-gradient(180deg, rgb(var(--ov) / 0.004), var(--bg-3));
+    background: var(--bg-2);
     border: 1px solid var(--edge-0);
     border-radius: var(--radius);
-    padding: 6px 6px 0;
+    box-shadow: var(--shadow);
+    padding: 20px 22px 22px;
     scroll-margin-top: 16px;
-    transition: border-color var(--transition-fast);
     animation: winIn 0.36s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-.win:hover {
-    border-color: var(--edge-1);
-}
-
-/* Каскадное появление окон */
-.dash-col--left .win:nth-child(2),
-.dash-col--right .win:nth-child(1) { animation-delay: 0.05s; }
-.dash-col--left .win:nth-child(3),
-.dash-col--right .win:nth-child(2) { animation-delay: 0.1s; }
-.dash-col--left .win:nth-child(4),
-.dash-col--right .win:nth-child(3) { animation-delay: 0.15s; }
+.dash > .win:nth-child(2) { animation-delay: 0.05s; }
+.dash > .win:nth-child(3) { animation-delay: 0.1s; }
+.dash > .win:nth-child(4) { animation-delay: 0.15s; }
 
 @keyframes winIn {
     from {
@@ -138,95 +130,14 @@ img {
 }
 
 .win-head {
-    position: relative;
-    display: flex;
-    align-items: center;
-    min-height: 30px;
-    padding: 6px 54px;
-    border-radius: 6px;
-    background: linear-gradient(180deg, rgb(var(--ov) / 0.02), rgba(0, 0, 0, 0.2));
-    box-shadow: inset 0 -1px 0 var(--edge-0);
+    margin-bottom: 14px;
 }
 
 .win-title {
-    flex: 1;
-    text-align: center;
-    color: var(--ink-2);
-    font-size: 13px;
-    font-weight: 500;
-    letter-spacing: 0.02em;
-}
-
-.win-dots {
-    position: absolute;
-    left: 14px;
-    top: 50%;
-    display: flex;
-    gap: 6px;
-    transform: translateY(-50%);
-}
-
-.win-dot {
-    position: relative;
-    width: 11px;
-    height: 11px;
-    border-radius: 50%;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5), inset 0 1px rgba(255, 255, 255, 0.2);
-    transition: transform 0.1s ease;
-}
-
-/* Невидимая зона побольше, чтобы попадать по точке пальцем */
-.win-dot::after {
-    content: "";
-    position: absolute;
-    inset: -6px;
-}
-
-.win-dot:hover {
-    transform: scale(1.15);
-}
-
-.win-dot--collapse {
-    background: linear-gradient(180deg, #ff5f56, #e53935);
-}
-
-.win-dot--expand {
-    background: linear-gradient(180deg, #27c93f, #1b9e2e);
-}
-
-.win-body {
-    padding: 14px 10px 18px;
-}
-
-.win.is-collapsed {
-    padding-bottom: 6px;
-}
-
-.win.is-collapsed .win-body {
-    display: none;
-}
-
-/* Раскрытое окно поверх затемнённой страницы; клик по фону закрывает (app.js) */
-body.has-expanded {
-    overflow: hidden;
-}
-
-body.has-expanded::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    z-index: 90;
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-}
-
-.win.is-expanded {
-    position: fixed;
-    inset: 4vh max(16px, calc((100vw - 1100px) / 2));
-    z-index: 100;
-    overflow-y: auto;
-    background: var(--bg-2);
-    border-color: var(--edge-2);
-    animation: none;
+    color: var(--ink);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
 }
 
 .win-desc {
@@ -247,8 +158,8 @@ body.has-expanded::before {
     min-height: 38px;
     padding: 0 14px;
     border: 1px solid var(--edge-1);
-    border-radius: 8px;
-    background: rgb(var(--ov) / 0.03);
+    border-radius: 10px;
+    background: rgb(var(--ov) / 0.04);
     color: var(--ink);
     font-size: 13px;
     font-weight: 600;
@@ -296,9 +207,9 @@ body.has-expanded::before {
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
-    padding: 8px 10px;
-    border-radius: 6px;
-    background: rgb(var(--ov) / 0.02);
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: rgb(var(--ov) / 0.03);
     font-size: 13px;
 }
 
@@ -373,9 +284,10 @@ a.info-value:hover {
     place-items: center;
     width: 44px;
     height: 44px;
-    border-radius: 10px;
-    background: linear-gradient(135deg, rgb(var(--ov) / 0.06), rgb(var(--ov) / 0.03));
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    border-radius: 14px;
+    background: var(--bg-2);
+    border: 1px solid var(--edge-0);
+    box-shadow: var(--shadow);
     color: var(--ink-2);
     transition: transform var(--transition-fast), background var(--transition-fast), color var(--transition-fast);
 }
@@ -581,10 +493,6 @@ a.info-value:hover {
     max-height: 52vh;
     overflow-y: auto;
     padding-right: 4px;
-}
-
-.win.is-expanded .changelog-panel {
-    max-height: none;
 }
 
 .changelog-panel[hidden] {
@@ -956,12 +864,6 @@ a.info-value:hover {
 /* ==========================================================================
    11. АДАПТИВНОСТЬ
    ========================================================================== */
-@media (max-width: 900px) {
-    .dash {
-        grid-template-columns: minmax(0, 1fr);
-    }
-}
-
 @media (max-width: 600px) {
     .wl-form {
         grid-template-columns: 1fr;
@@ -982,10 +884,6 @@ a.info-value:hover {
 
     .recent-grid {
         grid-template-columns: repeat(3, minmax(0, 1fr));
-    }
-
-    .win.is-expanded {
-        inset: 8px;
     }
 }
 
@@ -1043,9 +941,28 @@ a.info-value:hover {
     gap: 4px;
 }
 
-.mc-players img {
-    border-radius: 4px;
+.mc-players {
+    margin-bottom: 12px;
+}
+
+.mc-player {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 4px 4px;
+    border-radius: 999px;
+    background: rgb(var(--ov) / 0.05);
+    font-size: 13px;
+}
+
+.mc-player img {
+    border-radius: 50%;
     image-rendering: pixelated;
+}
+
+.mc-empty {
+    color: var(--muted);
+    font-size: 13px;
 }
 
 .lb-form {
@@ -1079,9 +996,10 @@ a.info-value:hover {
 
 /* Светлая тема и цветные акценты переопределяют только токены */
 :root[data-theme="light"] {
-    --bg: #f4f6f9;
+    --bg: #f3f5f8;
     --bg-2: #ffffff;
-    --bg-3: #eef1f5;
+    --bg-3: #ffffff;
+    --shadow: 0 1px 2px rgba(20, 30, 50, 0.06), 0 8px 24px rgba(20, 30, 50, 0.07);
     --ink: #14181d;
     --ink-2: #3a4450;
     --muted: #5d6874;

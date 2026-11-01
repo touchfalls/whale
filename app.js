@@ -97,56 +97,6 @@ const withTimeout = () => ({ signal: AbortSignal.timeout(FETCH_TIMEOUT_MS) });
  * 2. ОКНА ДАШБОРДА: КНОПКИ-ТОЧКИ «СВЕРНУТЬ» И «РАСКРЫТЬ»
  * ============================================================================
  */
-function setupWindowControls() {
-    document.querySelectorAll(".win").forEach(win => {
-        const head = win.querySelector(".win-head");
-        const title = head.querySelector(".win-title").textContent;
-
-        const dots = document.createElement("div");
-        dots.className = "win-dots";
-        dots.innerHTML = `
-            <button class="win-dot win-dot--collapse" type="button" aria-expanded="true" aria-label="Collapse ${title}" title="collapse"></button>
-            <button class="win-dot win-dot--expand" type="button" aria-pressed="false" aria-label="Expand ${title}" title="expand"></button>
-        `;
-        head.prepend(dots);
-
-        const [collapseBtn, expandBtn] = dots.children;
-        collapseBtn.addEventListener("click", () => {
-            // У раскрытого окна красная точка работает как «закрыть», как в macOS
-            if (win.classList.contains("is-expanded")) return closeExpandedWindow();
-            const collapsed = win.classList.toggle("is-collapsed");
-            collapseBtn.setAttribute("aria-expanded", String(!collapsed));
-        });
-        expandBtn.addEventListener("click", () => setWindowExpanded(win, !win.classList.contains("is-expanded")));
-    });
-
-    // Раскрытое окно закрывается по Esc или клику по затемнённому фону (это сам body)
-    document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeExpandedWindow();
-    });
-    document.body.addEventListener("click", (e) => {
-        if (e.target === document.body) closeExpandedWindow();
-    });
-}
-
-function setWindowExpanded(win, expanded) {
-    closeExpandedWindow();
-    if (!expanded) return;
-    win.classList.add("is-expanded");
-    win.classList.remove("is-collapsed");
-    win.querySelector(".win-dot--collapse").setAttribute("aria-expanded", "true");
-    win.querySelector(".win-dot--expand").setAttribute("aria-pressed", "true");
-    document.body.classList.add("has-expanded");
-}
-
-function closeExpandedWindow() {
-    document.querySelectorAll(".win.is-expanded").forEach(win => {
-        win.classList.remove("is-expanded");
-        win.querySelector(".win-dot--expand").setAttribute("aria-pressed", "false");
-    });
-    document.body.classList.remove("has-expanded");
-}
-
 /**
  * ============================================================================
  * 3. ИНИЦИАЛИЗАЦИЯ И РЕНДЕРИНГ ЭЛЕМЕНТОВ
@@ -164,7 +114,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (converterLinkEl) converterLinkEl.href = CONFIG.mrpackConverterUrl;
 
     // 2. Окна и их содержимое
-    setupWindowControls();
     renderLinksList();
     fetchMinecraftStatus();
     fetchModrinthProjects();
@@ -293,15 +242,25 @@ async function fetchMinecraftStatus() {
             // Список игроков есть только у Java и только если сервер его отдаёт
             const playersEl = document.getElementById("mc-players");
             if (playersEl) {
-                playersEl.replaceChildren(...(data.players?.list || []).map(p => {
+                const players = (data.players?.list || []).map(p => {
                     const img = document.createElement("img");
-                    img.src = `https://mc-heads.net/avatar/${encodeURIComponent(p.uuid || p.name_clean)}/24`;
-                    img.alt = p.name_clean;
-                    img.title = p.name_clean;
-                    img.width = img.height = 24;
+                    img.src = `https://mc-heads.net/avatar/${encodeURIComponent(p.uuid || p.name_clean)}/28`;
+                    img.alt = "";
+                    img.width = img.height = 28;
                     img.loading = "lazy";
-                    return img;
-                }));
+                    const chip = document.createElement("span");
+                    chip.className = "mc-player";
+                    chip.append(img, p.name_clean); // textContent-безопасно: ник от сервера
+                    return chip;
+                });
+                if (!players.length) {
+                    const empty = document.createElement("span");
+                    empty.className = "mc-empty";
+                    // Если игроки есть, но сервер скрывает имена, честно пишем только счёт
+                    empty.textContent = onlineCount > 0 ? "player names are hidden by the server" : "nobody online right now";
+                    players.push(empty);
+                }
+                playersEl.replaceChildren(...players);
             }
         } else {
             statusBadge.textContent = "[offline]";
