@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
@@ -31,35 +31,35 @@
 
             <section class="win" id="win-server">
                     <header class="win-head">
-                        <h2 class="win-title">server</h2>
+                        <h2 class="win-title" data-i18n="server">server</h2>
                     </header>
                     <div class="win-body">
-                        <p class="win-desc">private minecraft server for friends and friends of their friends</p>
+                        <p class="win-desc" data-i18n="srvDesc">private minecraft server for friends and friends of their friends</p>
                         <div class="info-grid">
                             <div class="info-item">
-                                <span class="info-label">status</span>
-                                <span id="mc-status" class="status-badge status-checking">[checking...]</span>
+                                <span class="info-label" data-i18n="status">status</span>
+                                <span id="mc-status" class="status-badge status-checking" data-i18n="checking">[checking...]</span>
                             </div>
                         </div>
                         <div class="mc-players" id="mc-players"></div>
-                        <a href="/srv-info" class="btn">server info / apply</a>
-                        <a href="#" id="whitelist-tg-link" class="btn btn--accent" target="_blank"
+                        <a href="/srv-info" class="btn" data-i18n="srvInfo">server info / apply</a>
+                        <a href="#" id="whitelist-tg-link" class="btn btn--accent" data-i18n="wlTg" target="_blank"
                             rel="noopener noreferrer">apply for whitelist via telegram ↗</a>
                     </div>
                 </section>
 
             <section class="win" id="win-shoutbox">
                     <header class="win-head">
-                        <h2 class="win-title">shoutbox</h2>
+                        <h2 class="win-title" data-i18n="shoutbox">shoutbox</h2>
                     </header>
                     <div class="win-body">
                         <div class="sb-list" id="sb-list" aria-live="polite"></div>
                         <form class="sb-form" id="sb-form">
-                            <input class="wl-input" name="nick" placeholder="nick" maxlength="20"
+                            <input class="wl-input" name="nick" data-i18n-ph="nick" placeholder="nick" maxlength="20"
                                 aria-label="Nickname" autocomplete="nickname" required>
-                            <input class="wl-input" name="text" placeholder="message" maxlength="200"
+                            <input class="wl-input" name="text" data-i18n-ph="message" placeholder="message" maxlength="200"
                                 aria-label="Message" autocomplete="off" required>
-                            <button class="btn btn--accent" id="sb-submit" type="submit">send</button>
+                            <button class="btn btn--accent" id="sb-submit" type="submit" data-i18n="send">send</button>
                             <div class="cf-turnstile" id="sb-captcha"></div>
                         </form>
                         <p class="win-desc" id="sb-count"></p>
@@ -69,14 +69,14 @@
 
             <section class="win" id="win-letterbox">
                     <header class="win-head">
-                        <h2 class="win-title">letterbox</h2>
+                        <h2 class="win-title" data-i18n="letterbox">letterbox</h2>
                     </header>
                     <div class="win-body">
-                        <p class="win-desc">anonymous private message, goes straight to my telegram and is not shown here</p>
+                        <p class="win-desc" data-i18n="lbDesc">anonymous private message, goes straight to my telegram and is not shown here</p>
                         <form class="lb-form" id="lb-form">
-                            <textarea class="wl-input" name="text" placeholder="say something :3" maxlength="500"
+                            <textarea class="wl-input" name="text" data-i18n-ph="lbPh" placeholder="say something :3" maxlength="500"
                                 aria-label="Private message" rows="3" required></textarea>
-                            <button class="btn btn--accent" id="lb-submit" type="submit">send</button>
+                            <button class="btn btn--accent" id="lb-submit" type="submit" data-i18n="send">send</button>
                             <div class="cf-turnstile" id="lb-captcha"></div>
                         </form>
                         <p class="win-desc" id="lb-status" role="status"></p>
@@ -85,17 +85,17 @@
 
             <section class="win" id="win-watchlist">
                     <header class="win-head">
-                        <h2 class="win-title">letterboxd watchlist match</h2>
+                        <h2 class="win-title" data-i18n="wlTitle">letterboxd watchlist match</h2>
                     </header>
                     <div class="win-body">
                         <form class="wl-form" id="wl-form">
-                            <input class="wl-input" id="wl-user-1" name="user1" placeholder="letterboxd username #1"
+                            <input class="wl-input" id="wl-user-1" name="user1" data-i18n-ph="wlUser1" placeholder="letterboxd username #1"
                                 aria-label="Letterboxd username 1" autocomplete="off" autocapitalize="off"
                                 spellcheck="false" required>
-                            <input class="wl-input" id="wl-user-2" name="user2" placeholder="letterboxd username #2"
+                            <input class="wl-input" id="wl-user-2" name="user2" data-i18n-ph="wlUser2" placeholder="letterboxd username #2"
                                 aria-label="Letterboxd username 2" autocomplete="off" autocapitalize="off"
                                 spellcheck="false" required>
-                            <button class="btn btn--accent" id="wl-submit" type="submit">find matches</button>
+                            <button class="btn btn--accent" id="wl-submit" type="submit" data-i18n="wlFind">find matches</button>
                         </form>
 
                         <div class="wl-result" id="wl-result" aria-live="polite"></div>
@@ -104,22 +104,22 @@
 
             <section class="win" id="win-recent">
                     <header class="win-head">
-                        <h2 class="win-title">recently watched</h2>
+                        <h2 class="win-title" data-i18n="recent">recently watched</h2>
                     </header>
                     <div class="win-body">
                         <div class="recent-grid" id="recent-container">
-                            <div class="state-indicator">[loading diary...]</div>
+                            <div class="state-indicator" data-i18n="loadingDiary">[loading diary...]</div>
                         </div>
                     </div>
                 </section>
 
             <section class="win" id="win-proj">
                     <header class="win-head">
-                        <h2 class="win-title">modrinth projects</h2>
+                        <h2 class="win-title" data-i18n="projects">modrinth projects</h2>
                     </header>
                     <div class="win-body">
                         <div class="projects-container" id="projects-container">
-                            <div class="state-indicator">[loading projects...]</div>
+                            <div class="state-indicator" data-i18n="loadingProjects">[loading projects...]</div>
                         </div>
                     </div>
                 </section>
@@ -135,34 +135,34 @@
                                 <span class="pack-link-title">se's pack</span>
                                 <span class="pack-link-sub">modrinth.com/modpack/ses-pack</span>
                             </span>
-                            <span class="pack-link-action">open ↗</span>
+                            <span class="pack-link-action" data-i18n="open">open ↗</span>
                         </a>
 
                         <a class="pack-link" id="pack-converter-link" href="https://mctoolbox.net/mrpack-to-zip"
                             target="_blank" rel="noopener noreferrer">
                             <span>
                                 <span class="pack-link-title">mrpack → zip converter</span>
-                                <span class="pack-link-sub">for manual installation into the Minecraft folder</span>
+                                <span class="pack-link-sub" data-i18n="converterSub">for manual installation into the Minecraft folder</span>
                             </span>
-                            <span class="pack-link-action">open ↗</span>
+                            <span class="pack-link-action" data-i18n="open">open ↗</span>
                         </a>
 
                         <button class="btn changelog-toggle" id="pack-changelog-toggle" type="button"
-                            aria-expanded="false" aria-controls="pack-changelog-panel">show changelog</button>
+                            aria-expanded="false" aria-controls="pack-changelog-panel" data-i18n="showCl">show changelog</button>
 
                         <div class="changelog-panel" id="pack-changelog-panel" hidden>
-                            <div class="state-indicator">[loading changelog...]</div>
+                            <div class="state-indicator" data-i18n="loadingCl">[loading changelog...]</div>
                         </div>
                     </div>
                 </section>
 
             <section class="win" id="win-info">
                     <header class="win-head">
-                        <h2 class="win-title">page info</h2>
+                        <h2 class="win-title" data-i18n="pageInfo">page info</h2>
                     </header>
                     <div class="win-body">
                         <div class="info-grid" id="page-info">
-                            <div class="state-indicator">[loading...]</div>
+                            <div class="state-indicator" data-i18n="loading">[loading...]</div>
                         </div>
                     </div>
                 </section>
@@ -170,9 +170,10 @@
         </div>
     </main>
 
-    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch theme" title="theme">◐</button>
+    <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch theme" data-i18n-title="theme" title="theme">◐</button>
 
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <script src="./i18n.js"></script>
     <script src="./app.js"></script>
 </body>
 

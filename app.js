@@ -193,13 +193,13 @@ async function fetchMinecraftStatus() {
     const statusBadge = document.getElementById("mc-status");
     if (!statusBadge) return;
 
-    statusBadge.textContent = "[checking...]";
+    statusBadge.textContent = t("checking");
     statusBadge.className = "status-badge status-checking";
 
     try {
         const serverIp = (CONFIG.minecraftServerIP || "").trim();
         if (!serverIp) {
-            statusBadge.textContent = "[offline]";
+            statusBadge.textContent = t("offline");
             statusBadge.className = "status-badge status-offline";
             return;
         }
@@ -233,9 +233,9 @@ async function fetchMinecraftStatus() {
             const maxCount = data.players?.max ?? 0;
 
             if (maxCount > 0) {
-                statusBadge.textContent = `[online] (${onlineCount}/${maxCount})`;
+                statusBadge.textContent = `${t("online")} (${onlineCount}/${maxCount})`;
             } else {
-                statusBadge.textContent = `[online]`;
+                statusBadge.textContent = t("online");
             }
             statusBadge.className = "status-badge status-online";
 
@@ -257,18 +257,18 @@ async function fetchMinecraftStatus() {
                     const empty = document.createElement("span");
                     empty.className = "mc-empty";
                     // Если игроки есть, но сервер скрывает имена, честно пишем только счёт
-                    empty.textContent = onlineCount > 0 ? "player names are hidden by the server" : "nobody online right now";
+                    empty.textContent = onlineCount > 0 ? t("hidden") : t("none");
                     players.push(empty);
                 }
                 playersEl.replaceChildren(...players);
             }
         } else {
-            statusBadge.textContent = "[offline]";
+            statusBadge.textContent = t("offline");
             statusBadge.className = "status-badge status-offline";
         }
     } catch (error) {
         console.error("mcstatus.io API error:", error);
-        statusBadge.textContent = "[offline]";
+        statusBadge.textContent = t("offline");
         statusBadge.className = "status-badge status-offline";
     }
 }
@@ -282,7 +282,7 @@ async function fetchModrinthProjects() {
     const container = document.getElementById("projects-container");
     if (!container) return;
 
-    container.innerHTML = `<div class="state-indicator">[loading projects...]</div>`;
+    container.innerHTML = `<div class="state-indicator">${t("loadingProjects")}</div>`;
 
     try {
         // Запрос к Modrinth API v2
@@ -296,7 +296,7 @@ async function fetchModrinthProjects() {
         container.innerHTML = "";
 
         if (!projects || projects.length === 0) {
-            container.innerHTML = `<div class="state-indicator">[no projects found for "${CONFIG.modrinthUsername}"]</div>`;
+            container.innerHTML = `<div class="state-indicator">${t("noProjects", { u: CONFIG.modrinthUsername })}</div>`;
             return;
         }
 
@@ -334,13 +334,13 @@ async function fetchModrinthProjects() {
             projectCard.querySelector(".project-icon").appendChild(icon);
             projectCard.querySelector(".project-name").textContent = project.title || project.slug;
             projectCard.querySelector(".project-downloads").append(formatDownloadsCount(project.downloads || 0));
-            projectCard.querySelector(".project-summary").textContent = project.description || "No description provided.";
+            projectCard.querySelector(".project-summary").textContent = project.description || t("noDesc");
 
             container.appendChild(projectCard);
         });
     } catch (error) {
         console.error("Modrinth Projects API error:", error);
-        container.innerHTML = `<div class="state-indicator state-error">[error loading projects from modrinth]</div>`;
+        container.innerHTML = `<div class="state-indicator state-error">${t("projErr")}</div>`;
     }
 }
 
@@ -375,7 +375,7 @@ function setupPackChangelog() {
         const shouldOpen = panel.hidden;
         panel.hidden = !shouldOpen;
         toggle.setAttribute("aria-expanded", String(shouldOpen));
-        toggle.textContent = shouldOpen ? "hide changelog" : "show changelog";
+        toggle.textContent = shouldOpen ? t("hideCl") : t("showCl");
 
         if (shouldOpen && !isPackChangelogLoaded && !isPackChangelogLoading) {
             fetchPackChangelog();
@@ -387,7 +387,7 @@ async function fetchPackChangelog() {
     const panel = document.getElementById("pack-changelog-panel");
     if (!panel) return;
 
-    panel.innerHTML = `<div class="state-indicator">[loading changelog...]</div>`;
+    panel.innerHTML = `<div class="state-indicator">${t("loadingCl")}</div>`;
     isPackChangelogLoading = true;
 
     try {
@@ -412,7 +412,7 @@ async function fetchPackChangelog() {
 
         const errorBox = document.createElement("div");
         errorBox.className = "changelog-empty state-error";
-        errorBox.textContent = "[error loading changelog — try again]";
+        errorBox.textContent = t("clErr");
         panel.appendChild(errorBox);
     } finally {
         isPackChangelogLoading = false;
@@ -426,10 +426,10 @@ function renderPendingPackMessage(panel) {
     message.className = "changelog-empty";
 
     const title = document.createElement("strong");
-    title.textContent = "[changelog is not public yet]";
+    title.textContent = t("clPrivate");
 
     const description = document.createElement("p");
-    description.textContent = "Modrinth will make it available here automatically after the project is approved and its versions are public.";
+    description.textContent = t("clPrivateDesc");
 
     message.append(title, description);
     panel.appendChild(message);
@@ -441,7 +441,7 @@ function renderPackVersions(panel, versions) {
     if (!Array.isArray(versions) || versions.length === 0) {
         const empty = document.createElement("div");
         empty.className = "changelog-empty";
-        empty.textContent = "[no public versions yet]";
+        empty.textContent = t("noVersions");
         panel.appendChild(empty);
         return;
     }
@@ -467,7 +467,7 @@ function createVersionChangelog(version) {
 
     const heading = document.createElement("h3");
     heading.className = "changelog-version-title";
-    heading.textContent = version.name || version.version_number || "Untitled version";
+    heading.textContent = version.name || version.version_number || t("untitled");
 
     const number = document.createElement("span");
     number.className = "changelog-version-number";
@@ -513,7 +513,7 @@ function formatModrinthDate(dateValue) {
     const date = new Date(dateValue);
     if (Number.isNaN(date.getTime())) return "";
 
-    return new Intl.DateTimeFormat("en", {
+    return new Intl.DateTimeFormat(LANG, {
         year: "numeric",
         month: "short",
         day: "numeric"
@@ -626,7 +626,7 @@ function renderSafeMarkdown(markdown) {
     if (!fragment.hasChildNodes()) {
         const empty = document.createElement("p");
         empty.className = "changelog-no-notes";
-        empty.textContent = "No changelog was provided for this version.";
+        empty.textContent = t("noClText");
         fragment.appendChild(empty);
     }
 
@@ -761,7 +761,7 @@ async function findWatchlistMatches(rawUser1, rawUser2) {
     const users = [rawUser1, rawUser2].map(parseLetterboxdUsername);
 
     if (users.some(u => !/^[a-z0-9_]{1,40}$/.test(u))) {
-        setWatchlistState(result, "[usernames can contain only letters, digits and _]", true);
+        setWatchlistState(result, t("badUser"), true);
         return;
     }
 
@@ -773,9 +773,9 @@ async function findWatchlistMatches(rawUser1, rawUser2) {
     let rateLimited = false;
     const totals = {};
     const updateStatus = () => {
-        const progress = Object.keys(totals).length === users.length ? ` ${loadedPages}/${totalPages} pages` : "";
-        const waiting = rateLimited ? " — proxy rate limit, waiting..." : "";
-        setWatchlistState(result, `[loading watchlists...${progress}${waiting}]`);
+        const progress = Object.keys(totals).length === users.length ? t("pages", { l: loadedPages, t: totalPages }) : "";
+        const waiting = rateLimited ? t("rateLimit") : "";
+        setWatchlistState(result, t("loadingWl", { p: progress, w: waiting }));
     };
     const progressFor = (user) => ({
         page: () => { loadedPages++; rateLimited = false; updateStatus(); },
@@ -791,12 +791,12 @@ async function findWatchlistMatches(rawUser1, rawUser2) {
         const lists = [list1, list2];
         const missingUser = users.find((u, i) => lists[i] === null);
         if (missingUser) {
-            setWatchlistState(result, `[letterboxd user "${missingUser}" not found]`, true);
+            setWatchlistState(result, t("userNotFound", { u: missingUser }), true);
             return;
         }
         const emptyUser = users.find((u, i) => lists[i].length === 0);
         if (emptyUser) {
-            setWatchlistState(result, `[watchlist of "${emptyUser}" is empty or private]`, true);
+            setWatchlistState(result, t("wlEmpty", { u: emptyUser }), true);
             return;
         }
 
@@ -805,7 +805,7 @@ async function findWatchlistMatches(rawUser1, rawUser2) {
         watchlistMatchIndex = 0;
 
         if (watchlistMatches.length === 0) {
-            setWatchlistState(result, `[no common films — ${list1.length} vs ${list2.length} in watchlists]`);
+            setWatchlistState(result, t("noCommon", { a: list1.length, b: list2.length }));
             return;
         }
 
@@ -813,7 +813,7 @@ async function findWatchlistMatches(rawUser1, rawUser2) {
     } catch (error) {
         console.error("Letterboxd watchlist error:", error);
         if (requestId === watchlistRequestId) {
-            setWatchlistState(result, "[error loading watchlists from letterboxd — try again]", true);
+            setWatchlistState(result, t("wlErr"), true);
         }
     } finally {
         if (requestId === watchlistRequestId) submit.disabled = false;
@@ -871,7 +871,7 @@ async function showWatchlistMatch() {
     const match = watchlistMatches[watchlistMatchIndex];
     const requestId = watchlistRequestId;
 
-    setWatchlistState(result, `[loading "${match.name}"...]`);
+    setWatchlistState(result, t("loadingFilm", { n: match.name }));
 
     let film;
     try {
@@ -916,7 +916,7 @@ async function showWatchlistMatch() {
     meta.className = "wl-film-meta";
 
     const country = document.createElement("span");
-    country.textContent = film.countries.length ? film.countries.join(", ") : "unknown country";
+    country.textContent = film.countries.length ? film.countries.join(", ") : t("unknownCountry");
 
     const rating = document.createElement("span");
     rating.className = "wl-film-rating";
@@ -927,7 +927,7 @@ async function showWatchlistMatch() {
 
     const synopsis = document.createElement("p");
     synopsis.className = "wl-film-synopsis";
-    synopsis.textContent = film.synopsis || "No synopsis on Letterboxd.";
+    synopsis.textContent = film.synopsis || t("noSynopsis");
 
     body.append(title, meta, synopsis);
     card.append(poster, body);
@@ -937,12 +937,12 @@ async function showWatchlistMatch() {
 
     const counter = document.createElement("span");
     counter.className = "wl-counter";
-    counter.textContent = `match ${watchlistMatchIndex + 1} of ${watchlistMatches.length}`;
+    counter.textContent = t("matchOf", { i: watchlistMatchIndex + 1, n: watchlistMatches.length });
 
     const pickButton = document.createElement("button");
     pickButton.className = "btn wl-pick";
     pickButton.type = "button";
-    pickButton.textContent = "PICK ANOTHER FILM";
+    pickButton.textContent = t("pick");
     pickButton.disabled = watchlistMatches.length < 2;
     pickButton.addEventListener("click", () => {
         watchlistMatchIndex = (watchlistMatchIndex + 1) % watchlistMatches.length;
@@ -974,13 +974,13 @@ async function fetchRecentFilms() {
 
         container.innerHTML = "";
         if (items.length === 0) {
-            setWatchlistState(container, "[diary is empty]");
+            setWatchlistState(container, t("diaryEmpty"));
             return;
         }
         items.forEach(item => container.appendChild(createRecentFilm(item)));
     } catch (error) {
         console.error("Letterboxd RSS error:", error);
-        setWatchlistState(container, "[error loading diary from letterboxd]", true);
+        setWatchlistState(container, t("diaryErr"), true);
     }
 }
 
@@ -1035,7 +1035,7 @@ async function fetchPageInfo() {
     const container = document.getElementById("page-info");
     if (!container) return;
 
-    const rows = [["source", `github.com/${CONFIG.githubRepo}`, `https://github.com/${CONFIG.githubRepo}`]];
+    const rows = [[t("source"), `github.com/${CONFIG.githubRepo}`, `https://github.com/${CONFIG.githubRepo}`]];
 
     try {
         const response = await fetch(`https://api.github.com/repos/${CONFIG.githubRepo}/commits?per_page=1`, withTimeout());
@@ -1043,8 +1043,8 @@ async function fetchPageInfo() {
 
         const [commit] = await response.json();
         rows.unshift(
-            ["updated", formatModrinthDate(commit.commit.committer.date)],
-            ["commit", `${commit.sha.slice(0, 7)} ${commit.commit.message.split("\n")[0]}`, commit.html_url]
+            [t("updated"), formatModrinthDate(commit.commit.committer.date)],
+            [t("commit"), `${commit.sha.slice(0, 7)} ${commit.commit.message.split("\n")[0]}`, commit.html_url]
         );
     } catch (error) {
         console.error("GitHub API error:", error);
@@ -1054,7 +1054,7 @@ async function fetchPageInfo() {
         const res = await fetch(`${CONFIG.shoutboxApi}/hit`, { method: "POST", ...withTimeout() });
         if (!res.ok) throw new Error(res.status);
         const v = await res.json();
-        rows.push(["visitors", `${v.today} today · ${v.unique} total`], ["views", String(v.views)]);
+        rows.push([t("visitors"), t("visitorsVal", { a: v.today, b: v.unique })], [t("views"), String(v.views)]);
     } catch (error) {
         console.error("visit stats error:", error);
     }
@@ -1099,7 +1099,7 @@ function setupShoutbox() {
 
     const countEl = document.getElementById("sb-count");
     const updateCount = () => {
-        countEl.textContent = `nick ${form.nick.value.length}/${form.nick.maxLength} · message ${form.text.value.length}/${form.text.maxLength}`;
+        countEl.textContent = t("count", { a: form.nick.value.length, b: form.nick.maxLength, c: form.text.value.length, d: form.text.maxLength });
     };
     form.addEventListener("input", updateCount);
     updateCount();
@@ -1117,14 +1117,14 @@ function setupShoutbox() {
                 nick.textContent = s.nick;
                 const time = document.createElement("time");
                 time.className = "sb-time";
-                time.textContent = new Date(s.ts * 1000).toLocaleString("ru-RU", { dateStyle: "short", timeStyle: "short" });
+                time.textContent = new Date(s.ts * 1000).toLocaleString(LANG, { dateStyle: "short", timeStyle: "short" });
                 // textContent, не innerHTML: ник и текст пишут посторонние
                 row.append(nick, ": ", s.text, " ", time);
                 return row;
             }));
             list.scrollTop = list.scrollHeight;
         } catch {
-            list.textContent = "[unavailable]";
+            list.textContent = t("unavailable");
         }
     }
 
@@ -1132,7 +1132,7 @@ function setupShoutbox() {
         e.preventDefault();
         errorEl.textContent = "";
         const token = widgetId !== null ? window.turnstile.getResponse(widgetId) : "";
-        if (!token) { errorEl.textContent = "pass the captcha first"; return; }
+        if (!token) { errorEl.textContent = t("captcha"); return; }
 
         submit.disabled = true;
         try {
@@ -1148,7 +1148,7 @@ function setupShoutbox() {
             updateCount();
             await load();
         } catch (err) {
-            errorEl.textContent = `failed: ${err.message}`;
+            errorEl.textContent = `${t("failed")}: ${err.message}`;
         } finally {
             submit.disabled = false;
             if (widgetId !== null) window.turnstile.reset(widgetId);
@@ -1182,7 +1182,7 @@ function setupLetterbox() {
         e.preventDefault();
         status.textContent = "";
         const token = widgetId !== null ? window.turnstile.getResponse(widgetId) : "";
-        if (!token) { status.textContent = "pass the captcha first"; return; }
+        if (!token) { status.textContent = t("captcha"); return; }
 
         submit.disabled = true;
         try {
@@ -1194,9 +1194,9 @@ function setupLetterbox() {
             });
             if (!res.ok) throw new Error((await res.json()).error || res.status);
             form.text.value = "";
-            status.textContent = "sent ✓";
+            status.textContent = t("sentOk");
         } catch (err) {
-            status.textContent = `failed: ${err.message}`;
+            status.textContent = `${t("failed")}: ${err.message}`;
         } finally {
             submit.disabled = false;
             if (widgetId !== null) window.turnstile.reset(widgetId);
