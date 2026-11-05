@@ -115,6 +115,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // 2. Окна и их содержимое
     renderLinksList();
+    setupIpCopy();
+    renderMcHistory();
     fetchMinecraftStatus();
     fetchModrinthProjects();
     fetchRecentFilms();
@@ -270,6 +272,61 @@ async function fetchMinecraftStatus() {
         console.error("mcstatus.io API error:", error);
         statusBadge.textContent = t("offline");
         statusBadge.className = "status-badge status-offline";
+    }
+}
+
+/** Клик по IP копирует адрес сервера в буфер обмена */
+function setupIpCopy() {
+    const btn = document.getElementById("ip-copy");
+    if (!btn) return;
+    btn.textContent = CONFIG.minecraftServerIP;
+    btn.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(CONFIG.minecraftServerIP); } catch { return; }
+        btn.textContent = t("copied");
+        setTimeout(() => { btn.textContent = CONFIG.minecraftServerIP; }, 1500);
+    });
+}
+
+/** График онлайна за 24 часа: данные пишет cron воркера (worker/shoutbox.js, GET /mc-history) */
+async function renderMcHistory() {
+    const box = document.getElementById("mc-history");
+    if (!box) return;
+    try {
+        const res = await fetch(`${CONFIG.shoutboxApi}/mc-history`, withTimeout());
+        if (!res.ok) throw new Error(res.status);
+        const rows = await res.json();
+        if (rows.length < 2) return; // пока мало точек, график не рисуем
+
+        const W = 240, H = 40, now = Date.now() / 1000;
+        const max = Math.max(1, ...rows.map(r => r.players));
+        const x = ts => ((ts - (now - 86400)) / 86400) * W;
+        const y = n => H - 4 - (n / max) * (H - 8);
+        const ns = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+        svg.setAttribute("role", "img");
+        svg.setAttribute("aria-label", t("history"));
+
+        const line = document.createElementNS(ns, "polyline");
+        line.setAttribute("points", rows.filter(r => r.online).map(r => `${x(r.ts).toFixed(1)},${y(r.players).toFixed(1)}`).join(" "));
+        line.setAttribute("class", "mc-spark-line");
+        svg.append(line);
+
+        rows.filter(r => !r.online).forEach(r => {
+            const dot = document.createElementNS(ns, "circle");
+            dot.setAttribute("cx", x(r.ts).toFixed(1));
+            dot.setAttribute("cy", H - 2);
+            dot.setAttribute("r", 1.8);
+            dot.setAttribute("class", "mc-spark-off");
+            svg.append(dot);
+        });
+
+        const caption = document.createElement("span");
+        caption.className = "mc-empty";
+        caption.textContent = `${t("history")} · max ${max}`;
+        box.replaceChildren(svg, caption);
+    } catch (error) {
+        console.error("mc-history error:", error);
     }
 }
 

@@ -20,7 +20,8 @@ const I18N = {
         loadingFilm: '[loading "{n}"...]', unknownCountry: "unknown country", noSynopsis: "No synopsis on Letterboxd.", matchOf: "match {i} of {n}",
         pick: "PICK ANOTHER FILM", diaryEmpty: "[diary is empty]", diaryErr: "[error loading diary from letterboxd]",
         updated: "updated", commit: "commit", source: "source", visitors: "visitors", views: "views", visitorsVal: "{a} today · {b} total",
-        count: "nick {a}/{b} · message {c}/{d}", unavailable: "[unavailable]", captcha: "pass the captcha first", failed: "failed", sentOk: "sent ✓"
+        count: "nick {a}/{b} · message {c}/{d}", unavailable: "[unavailable]", captcha: "pass the captcha first", failed: "failed", sentOk: "sent ✓",
+        copied: "copied ✓", history: "last 24h"
     },
     ru: {
         server: "сервер", srvDesc: "приватный майнкрафт-сервер для друзей и друзей их друзей", status: "статус",
@@ -42,7 +43,8 @@ const I18N = {
         loadingFilm: '[загрузка "{n}"...]', unknownCountry: "страна неизвестна", noSynopsis: "На Letterboxd нет описания.", matchOf: "совпадение {i} из {n}",
         pick: "ДРУГОЙ ФИЛЬМ", diaryEmpty: "[дневник пуст]", diaryErr: "[ошибка загрузки дневника с letterboxd]",
         updated: "обновлено", commit: "коммит", source: "исходники", visitors: "посетители", views: "просмотры", visitorsVal: "{a} сегодня · {b} всего",
-        count: "ник {a}/{b} · сообщение {c}/{d}", unavailable: "[недоступно]", captcha: "сначала пройди капчу", failed: "ошибка", sentOk: "отправлено ✓"
+        count: "ник {a}/{b} · сообщение {c}/{d}", unavailable: "[недоступно]", captcha: "сначала пройди капчу", failed: "ошибка", sentOk: "отправлено ✓",
+        copied: "скопировано ✓", history: "последние 24 ч"
     },
     it: {
         server: "server", srvDesc: "server minecraft privato per amici e amici dei loro amici", status: "stato",
@@ -64,7 +66,8 @@ const I18N = {
         loadingFilm: '[caricamento "{n}"...]', unknownCountry: "paese sconosciuto", noSynopsis: "Nessuna sinossi su Letterboxd.", matchOf: "match {i} di {n}",
         pick: "SCEGLI UN ALTRO FILM", diaryEmpty: "[il diario è vuoto]", diaryErr: "[errore nel caricamento del diario da letterboxd]",
         updated: "aggiornato", commit: "commit", source: "sorgente", visitors: "visitatori", views: "visualizzazioni", visitorsVal: "{a} oggi · {b} in totale",
-        count: "nick {a}/{b} · messaggio {c}/{d}", unavailable: "[non disponibile]", captcha: "prima risolvi il captcha", failed: "errore", sentOk: "inviato ✓"
+        count: "nick {a}/{b} · messaggio {c}/{d}", unavailable: "[non disponibile]", captcha: "prima risolvi il captcha", failed: "errore", sentOk: "inviato ✓",
+        copied: "copiato ✓", history: "ultime 24 ore"
     },
     fr: {
         server: "serveur", srvDesc: "serveur minecraft privé pour les amis et les amis de leurs amis", status: "statut",
@@ -86,11 +89,14 @@ const I18N = {
         loadingFilm: '[chargement de "{n}"...]', unknownCountry: "pays inconnu", noSynopsis: "Pas de synopsis sur Letterboxd.", matchOf: "match {i} sur {n}",
         pick: "CHOISIR UN AUTRE FILM", diaryEmpty: "[le journal est vide]", diaryErr: "[erreur de chargement du journal depuis letterboxd]",
         updated: "mis à jour", commit: "commit", source: "source", visitors: "visiteurs", views: "vues", visitorsVal: "{a} aujourd'hui · {b} au total",
-        count: "pseudo {a}/{b} · message {c}/{d}", unavailable: "[indisponible]", captcha: "résous d'abord le captcha", failed: "échec", sentOk: "envoyé ✓"
+        count: "pseudo {a}/{b} · message {c}/{d}", unavailable: "[indisponible]", captcha: "résous d'abord le captcha", failed: "échec", sentOk: "envoyé ✓",
+        copied: "copié ✓", history: "dernières 24 h"
     }
 };
 
-const LANG = [...(navigator.languages || [navigator.language])]
+let saved = null;
+try { saved = localStorage.getItem("lang"); } catch { /* приватный режим */ }
+const LANG = I18N[saved] ? saved : [...(navigator.languages || [navigator.language])]
     .map(l => String(l).slice(0, 2).toLowerCase()).find(l => I18N[l]) || "en";
 
 /** t("key", {a: 1}) — строка на языке посетителя, {a} заменяется значением. */
@@ -101,4 +107,19 @@ document.addEventListener("DOMContentLoaded", () => {
     document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
     document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
     document.querySelectorAll("[data-i18n-title]").forEach(el => { el.title = t(el.dataset.i18nTitle); });
+});
+
+// Ручной выбор языка: по кругу ru → en → it → fr, сохраняется в localStorage
+document.addEventListener("DOMContentLoaded", () => {
+    const langs = Object.keys(I18N);
+    const btn = document.createElement("button");
+    btn.className = "theme-toggle lang-toggle";
+    btn.type = "button";
+    btn.textContent = LANG.toUpperCase();
+    btn.setAttribute("aria-label", "Language");
+    btn.addEventListener("click", () => {
+        try { localStorage.setItem("lang", langs[(langs.indexOf(LANG) + 1) % langs.length]); } catch { /* ок */ }
+        location.reload();
+    });
+    document.body.append(btn);
 });

@@ -11,6 +11,8 @@
     <link rel="stylesheet" href="/style.css">
     <style>
         .ap-check { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; }
+        [hidden] { display: none !important; }
+        .srv-rules { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 14px; }
         .ap-check input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: pointer; }
     </style>
 </head>
@@ -29,11 +31,42 @@
                             <span class="info-label" data-i18n="status">status</span>
                             <span id="mc-status" class="status-badge status-checking">[checking...]</span>
                         </div>
+                        <div class="info-item">
+                            <span class="info-label">ip</span>
+                            <button class="ip-copy" id="ip-copy" type="button">play.curlz.xyz</button>
+                        </div>
                     </div>
                     <div class="mc-players" id="mc-players"></div>
-                    <a href="https://discord.gg/XJTZtrzbRh" class="btn btn--accent" target="_blank"
-                        rel="noopener noreferrer">discord ↗</a>
                     <a href="/" class="btn" data-i18n="back">← back</a>
+                </div>
+            </section>
+
+            <section class="win" id="discord-card" hidden>
+                <header class="win-head">
+                    <h2 class="win-title">discord</h2>
+                </header>
+                <div class="win-body">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label" data-i18n="dcOnline">online</span>
+                            <span class="info-value" id="dc-online"></span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label" data-i18n="dcMembers">members</span>
+                            <span class="info-value" id="dc-members"></span>
+                        </div>
+                    </div>
+                    <a href="https://discord.gg/XJTZtrzbRh" class="btn btn--accent" target="_blank"
+                        rel="noopener noreferrer" data-i18n="dcJoin">join discord ↗</a>
+                </div>
+            </section>
+
+            <section class="win">
+                <header class="win-head">
+                    <h2 class="win-title" data-i18n="rulesTitle">rules</h2>
+                </header>
+                <div class="win-body">
+                    <ol class="srv-rules" id="srv-rules"></ol>
                 </div>
             </section>
 
@@ -42,7 +75,7 @@
                     <h2 class="win-title" data-i18n="apply">apply</h2>
                 </header>
                 <div class="win-body">
-                    <p class="win-desc" data-i18n="applyDesc">the application goes straight to my telegram</p>
+                    <p class="win-desc" data-i18n="applyDesc">the application goes straight to the admin's telegram</p>
                     <form class="lb-form" id="ap-form">
                         <input class="wl-input" name="nick" data-i18n-ph="nick" placeholder="minecraft nick" maxlength="16"
                             pattern="[A-Za-z0-9_]{3,16}" autocomplete="off" required>
@@ -70,35 +103,73 @@
     <script>
         const T = {
             en: { back: "← back", desc: "private minecraft server for friends and friends of their friends", status: "status",
-                apply: "apply", applyDesc: "the application goes straight to my telegram", nick: "minecraft nick", age: "age",
+                apply: "apply", applyDesc: "the application goes straight to the admin's telegram", nick: "minecraft nick", age: "age",
                 source: "how did you hear about the server?", ideas: "what ideas are you joining with?",
                 contact: "your telegram or discord (required)", tg: "i'm ready to join the telegram group", send: "send",
                 captcha: "pass the captcha first", sending: "sending...", sent: "sent! i'll get back to you",failed: "failed",
-                none: "nobody online right now", hidden: "player names are hidden by the server" },
+                none: "nobody online right now", hidden: "player names are hidden by the server",
+                copied: "copied ✓", dcOnline: "online", dcMembers: "members", dcJoin: "join discord ↗", rulesTitle: "rules", duplicate: "an application with this nick already exists", many: "too many applications from your network, try tomorrow",
+                rules: ["No griefing: don't break or steal other players' builds and items.", "No cheats, x-ray or exploiting bugs.", "Be respectful to everyone, no hate or spam in chat.", "Ask before building close to someone else's base.", "The admin's decisions are final."] },
             ru: { back: "← назад", desc: "приватный майнкрафт-сервер для друзей и друзей их друзей", status: "статус",
-                apply: "заявка", applyDesc: "заявка уходит прямо мне в телеграм", nick: "ник в майнкрафте", age: "возраст",
+                apply: "заявка", applyDesc: "заявка уходит прямо в телеграм админу", nick: "ник в майнкрафте", age: "возраст",
                 source: "откуда узнал о сервере?", ideas: "с какими идеями зайдёшь на сервер?",
                 contact: "твой телеграм или дискорд (обязательно)", tg: "готов присоединиться к группе в телеграм", send: "отправить",
                 captcha: "сначала пройди капчу", sending: "отправляю...", sent: "отправлено! я отвечу", failed: "ошибка",
-                none: "сейчас никого нет онлайн", hidden: "сервер скрывает ники игроков" },
+                none: "сейчас никого нет онлайн", hidden: "сервер скрывает ники игроков",
+                copied: "скопировано ✓", dcOnline: "онлайн", dcMembers: "участников", dcJoin: "зайти в discord ↗", rulesTitle: "правила", duplicate: "заявка с таким ником уже есть", many: "слишком много заявок с вашей сети, попробуй завтра",
+                rules: ["Без гриферства: не ломай и не своруй чужие постройки и вещи.", "Без читов, x-ray и использования багов.", "Уважай всех, без оскорблений и спама в чате.", "Спрашивай, прежде чем строить рядом с чужой базой.", "Решения админа окончательные."] },
             it: { back: "← indietro", desc: "server minecraft privato per amici e amici dei loro amici", status: "stato",
-                apply: "candidatura", applyDesc: "la candidatura arriva direttamente sul mio telegram", nick: "nick di minecraft", age: "età",
+                apply: "candidatura", applyDesc: "la candidatura arriva direttamente sul telegram dell'admin", nick: "nick di minecraft", age: "età",
                 source: "come hai conosciuto il server?", ideas: "con quali idee entrerai nel server?",
                 contact: "il tuo telegram o discord (obbligatorio)", tg: "sono pronto a unirmi al gruppo telegram", send: "invia",
                 captcha: "prima risolvi il captcha", sending: "invio...", sent: "inviato! ti risponderò", failed: "errore",
-                none: "nessuno online al momento", hidden: "il server nasconde i nomi dei giocatori" },
+                none: "nessuno online al momento", hidden: "il server nasconde i nomi dei giocatori",
+                copied: "copiato ✓", dcOnline: "online", dcMembers: "membri", dcJoin: "entra su discord ↗", rulesTitle: "regole", duplicate: "esiste già una candidatura con questo nick", many: "troppe candidature dalla tua rete, riprova domani",
+                rules: ["Niente grief: non distruggere né rubare le costruzioni e gli oggetti altrui.", "Niente cheat, x-ray o sfruttamento di bug.", "Rispetta tutti, niente insulti o spam in chat.", "Chiedi prima di costruire vicino alla base di qualcun altro.", "Le decisioni dell'admin sono definitive."] },
             fr: { back: "← retour", desc: "serveur minecraft privé pour les amis et les amis de leurs amis", status: "statut",
-                apply: "candidature", applyDesc: "la candidature arrive directement sur mon telegram", nick: "pseudo minecraft", age: "âge",
+                apply: "candidature", applyDesc: "la candidature arrive directement sur le telegram de l'admin", nick: "pseudo minecraft", age: "âge",
                 source: "comment as-tu connu le serveur ?", ideas: "avec quelles idées rejoins-tu le serveur ?",
                 contact: "ton telegram ou discord (obligatoire)", tg: "je suis prêt à rejoindre le groupe telegram", send: "envoyer",
                 captcha: "résous d'abord le captcha", sending: "envoi...", sent: "envoyé ! je te réponds", failed: "échec",
-                none: "personne en ligne pour le moment", hidden: "le serveur masque les pseudos des joueurs" }
+                none: "personne en ligne pour le moment", hidden: "le serveur masque les pseudos des joueurs",
+                copied: "copié ✓", dcOnline: "en ligne", dcMembers: "membres", dcJoin: "rejoindre discord ↗", rulesTitle: "règles", duplicate: "une candidature avec ce pseudo existe déjà", many: "trop de candidatures depuis ton réseau, réessaie demain",
+                rules: ["Pas de grief : ne casse ni ne vole les constructions et objets des autres.", "Pas de triche, x-ray ni exploitation de bugs.", "Respecte tout le monde, pas d'insultes ni de spam dans le chat.", "Demande avant de construire près de la base de quelqu'un.", "Les décisions de l'admin sont définitives."] }
         };
-        const lang = [...navigator.languages || [navigator.language]].map(l => String(l).slice(0, 2).toLowerCase()).find(l => T[l]) || "en";
+        let saved = null;
+        try { saved = localStorage.getItem("lang"); } catch { /* приватный режим */ }
+        const lang = T[saved] ? saved : [...navigator.languages || [navigator.language]].map(l => String(l).slice(0, 2).toLowerCase()).find(l => T[l]) || "en";
         const t = T[lang];
         document.documentElement.lang = lang;
         document.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t[el.dataset.i18n]; });
         document.querySelectorAll("[data-i18n-ph]").forEach(el => { el.placeholder = t[el.dataset.i18nPh]; });
+        document.getElementById("srv-rules").append(...t.rules.map(text => Object.assign(document.createElement("li"), { textContent: text })));
+
+        // Тот же ключ "lang", что и на главной: ru → en → it → fr
+        const langBtn = Object.assign(document.createElement("button"), { className: "theme-toggle lang-toggle", type: "button", textContent: lang.toUpperCase() });
+        langBtn.setAttribute("aria-label", "Language");
+        langBtn.addEventListener("click", () => {
+            const langs = Object.keys(T);
+            try { localStorage.setItem("lang", langs[(langs.indexOf(lang) + 1) % langs.length]); } catch { /* ок */ }
+            location.reload();
+        });
+        document.body.append(langBtn);
+
+        const ipBtn = document.getElementById("ip-copy");
+        ipBtn.addEventListener("click", async () => {
+            try { await navigator.clipboard.writeText("play.curlz.xyz"); } catch { return; }
+            ipBtn.textContent = t.copied;
+            setTimeout(() => { ipBtn.textContent = "play.curlz.xyz"; }, 1500);
+        });
+
+        // Публичный API приглашения: счётчики участников без включения виджета на сервере
+        fetch("https://discord.com/api/v10/invites/XJTZtrzbRh?with_counts=true", { signal: AbortSignal.timeout(10000) })
+            .then(res => res.ok ? res.json() : Promise.reject(res.status))
+            .then(d => {
+                document.getElementById("dc-online").textContent = d.approximate_presence_count;
+                document.getElementById("dc-members").textContent = d.approximate_member_count;
+                document.getElementById("discord-card").hidden = false;
+            })
+            .catch(err => console.error("discord invite error:", err));
 
         const API = "https://shoutbox.curlz.xyz/apply";
         const SITEKEY = "0x4AAAAAAFtGdMckXwpC0pjR"; // тот же публичный ключ, что в CONFIG.turnstileSiteKey
@@ -134,7 +205,7 @@
                 form.reset();
                 status.textContent = t.sent;
             } catch (err) {
-                status.textContent = `${t.failed}: ${err.message}`;
+                status.textContent = err.message === "duplicate" ? t.duplicate : err.message === "too many" ? t.many : `${t.failed}: ${err.message}`;
             } finally {
                 btn.disabled = false;
                 turnstile.reset(widgetId);

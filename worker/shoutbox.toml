@@ -10,3 +10,6 @@ database_id = "60a4c9b9-a271-45e4-a569-0aad8377bd1d"
 [[routes]]
 pattern = "shoutbox.curlz.xyz"
 custom_domain = true
+
+[triggers]
+crons = ["*/10 * * * *"]
