@@ -4,7 +4,7 @@
  * POST /       -> {nick, text, token} добавить сообщение
  * DELETE /<id> -> удалить (Authorization: Bearer ADMIN_TOKEN)
  * POST /letterbox -> {text, token} приватное сообщение владельцу в Telegram (не хранится)
- * POST /apply   -> {nick, age, source, ideas, tg, token} анкета seven-eleven в Telegram (не хранится)
+ * POST /apply   -> {nick, age, contact, source, ideas, tg, token} анкета seven-eleven в Telegram (не хранится)
  * POST /hit      -> учесть визит (хеш IP, раз в сутки на посетителя) и вернуть статистику {today, unique, views}
  * POST /tg       -> вебхук Telegram: нажатие кнопки «delete» в уведомлении (только от TG_CHAT_ID)
  * POST /tg-setup -> регистрирует вебхук в Telegram (Authorization: Bearer ADMIN_TOKEN), вызвать один раз после деплоя
@@ -118,16 +118,16 @@ export default {
             let data;
             try { data = await request.json(); } catch { return reply({ error: "bad json" }, 400); }
             const str = k => (typeof data[k] === "string" ? data[k].trim() : "");
-            const { nick, source, ideas } = { nick: str("nick"), source: str("source"), ideas: str("ideas") };
+            const { nick, source, ideas, contact } = { nick: str("nick"), source: str("source"), ideas: str("ideas"), contact: str("contact") };
             const age = Number(data.age);
             if (!/^[A-Za-z0-9_]{3,16}$/.test(nick) || !Number.isInteger(age) || age < 6 || age > 99
-                || !source || source.length > 300 || !ideas || ideas.length > MAX_LETTER
+                || !contact || contact.length > 100 || !source || source.length > 300 || !ideas || ideas.length > MAX_LETTER
                 || !["yes", "no"].includes(data.tg)) return reply({ error: "bad form" }, 400);
             if (!(await captchaOk(request, env, data.token))) return reply({ error: "captcha failed" }, 403);
 
             const sent = await tg(env, "sendMessage", {
                 chat_id: env.TG_CHAT_ID,
-                text: `📝 seven-eleven application\n\nnick: ${nick}\nage: ${age}\nfrom: ${source}\nideas: ${ideas}\ntelegram group: ${data.tg}`
+                text: `📝 seven-eleven application\n\nnick: ${nick}\nage: ${age}\ncontact: ${contact}\nfrom: ${source}\nideas: ${ideas}\ntelegram group: ${data.tg}`
             });
             return sent.ok ? reply({ ok: true }, 201) : reply({ error: "delivery failed" }, 502);
         }

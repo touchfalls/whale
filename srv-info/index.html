@@ -9,6 +9,10 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
     <link rel="stylesheet" href="/style.css">
+    <style>
+        .ap-check { display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px; }
+        .ap-check input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+    </style>
 </head>
 
 <body>
@@ -22,10 +26,11 @@
                     <p class="win-desc">private minecraft server for friends and friends of their friends</p>
                     <div class="info-grid">
                         <div class="info-item">
-                            <span class="info-label">ip</span>
-                            <span>play.curlz.xyz</span>
+                            <span class="info-label">status</span>
+                            <span id="mc-status" class="status-badge status-checking">[checking...]</span>
                         </div>
                     </div>
+                    <div class="mc-players" id="mc-players"></div>
                     <a href="https://discord.gg/XJTZtrzbRh" class="btn btn--accent" target="_blank"
                         rel="noopener noreferrer">discord ↗</a>
                     <a href="/" class="btn">← back</a>
@@ -46,11 +51,12 @@
                             maxlength="300" required>
                         <textarea class="wl-input" name="ideas" placeholder="what ideas are you joining with?"
                             maxlength="500" rows="3" required></textarea>
-                        <select class="wl-input" name="tg" required>
-                            <option value="" disabled selected>ready to join the telegram group?</option>
-                            <option value="yes">yes</option>
-                            <option value="no">no</option>
-                        </select>
+                        <input class="wl-input" name="contact" placeholder="your telegram or discord (required)"
+                            maxlength="100" autocomplete="off" required>
+                        <label class="ap-check">
+                            <input type="checkbox" name="tg">
+                            <span>i'm ready to join the telegram group</span>
+                        </label>
                         <button class="btn btn--accent" id="ap-submit" type="submit">send</button>
                         <div id="ap-captcha"></div>
                     </form>
@@ -89,7 +95,7 @@
                 const res = await fetch(API, {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ...Object.fromEntries(new FormData(form)), token }),
+                    body: JSON.stringify({ ...Object.fromEntries(new FormData(form)), tg: form.tg.checked ? "yes" : "no", token }),
                     signal: AbortSignal.timeout(10000)
                 });
                 if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
@@ -102,6 +108,50 @@
                 turnstile.reset(widgetId);
             }
         });
+
+        // Скопировано из app.js (fetchMinecraftStatus), адрес сервера — play.curlz.xyz
+        async function fetchMinecraftStatus() {
+            const serverIp = "play.curlz.xyz";
+            const statusBadge = document.getElementById("mc-status");
+            const setBadge = (text, cls) => { statusBadge.textContent = text; statusBadge.className = `status-badge status-${cls}`; };
+            try {
+                const get = kind => fetch(`https://api.mcstatus.io/v2/status/${kind}/${serverIp}`, { signal: AbortSignal.timeout(10000) });
+                let res = await get("java");
+                let data = res.ok ? await res.json() : null;
+                if (!data?.online) {
+                    const b = await get("bedrock").catch(() => null);
+                    if (b?.ok) { const bd = await b.json(); if (bd.online) data = bd; }
+                }
+                if (!data?.online) return setBadge("[offline]", "offline");
+
+                const onlineCount = data.players?.online ?? 0;
+                const maxCount = data.players?.max ?? 0;
+                setBadge(maxCount > 0 ? `[online] (${onlineCount}/${maxCount})` : "[online]", "online");
+
+                const chips = (data.players?.list || []).map(p => {
+                    const img = document.createElement("img");
+                    img.src = `https://mc-heads.net/avatar/${encodeURIComponent(p.uuid || p.name_clean)}/28`;
+                    img.alt = "";
+                    img.width = img.height = 28;
+                    img.loading = "lazy";
+                    const chip = document.createElement("span");
+                    chip.className = "mc-player";
+                    chip.append(img, p.name_clean);
+                    return chip;
+                });
+                if (!chips.length) {
+                    const empty = document.createElement("span");
+                    empty.className = "mc-empty";
+                    empty.textContent = onlineCount > 0 ? "player names are hidden by the server" : "nobody online right now";
+                    chips.push(empty);
+                }
+                document.getElementById("mc-players").replaceChildren(...chips);
+            } catch (err) {
+                console.error("mcstatus.io API error:", err);
+                setBadge("[offline]", "offline");
+            }
+        }
+        fetchMinecraftStatus();
     </script>
 </body>
 
