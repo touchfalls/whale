@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="seven-eleven minecraft server">
+    <title>seven-eleven</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+    <link rel="stylesheet" href="/style.css">
+</head>
+
+<body>
+    <main class="container">
+        <div class="dash">
+            <section class="win">
+                <header class="win-head">
+                    <h2 class="win-title">seven-eleven</h2>
+                </header>
+                <div class="win-body">
+                    <p class="win-desc">private minecraft server for friends and friends of their friends</p>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">ip</span>
+                            <span>play.curlz.xyz</span>
+                        </div>
+                    </div>
+                    <a href="https://discord.gg/XJTZtrzbRh" class="btn btn--accent" target="_blank"
+                        rel="noopener noreferrer">discord ↗</a>
+                    <a href="/" class="btn">← back</a>
+                </div>
+            </section>
+
+            <section class="win">
+                <header class="win-head">
+                    <h2 class="win-title">apply</h2>
+                </header>
+                <div class="win-body">
+                    <p class="win-desc">the application goes straight to my telegram</p>
+                    <form class="lb-form" id="ap-form">
+                        <input class="wl-input" name="nick" placeholder="minecraft nick" maxlength="16"
+                            pattern="[A-Za-z0-9_]{3,16}" autocomplete="off" required>
+                        <input class="wl-input" name="age" type="number" placeholder="age" min="6" max="99" required>
+                        <input class="wl-input" name="source" placeholder="how did you hear about the server?"
+                            maxlength="300" required>
+                        <textarea class="wl-input" name="ideas" placeholder="what ideas are you joining with?"
+                            maxlength="500" rows="3" required></textarea>
+                        <select class="wl-input" name="tg" required>
+                            <option value="" disabled selected>ready to join the telegram group?</option>
+                            <option value="yes">yes</option>
+                            <option value="no">no</option>
+                        </select>
+                        <button class="btn btn--accent" id="ap-submit" type="submit">send</button>
+                        <div id="ap-captcha"></div>
+                    </form>
+                    <p class="win-desc" id="ap-status" role="status"></p>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
+    <script>
+        const API = "https://shoutbox.curlz.xyz/apply";
+        const SITEKEY = "0x4AAAAAAFtGdMckXwpC0pjR"; // тот же публичный ключ, что в CONFIG.turnstileSiteKey
+        const form = document.getElementById("ap-form");
+        const status = document.getElementById("ap-status");
+        const btn = document.getElementById("ap-submit");
+
+        let theme = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+        try { theme = localStorage.getItem("theme") || theme; } catch { /* приватный режим */ }
+        document.documentElement.dataset.theme = theme;
+
+        let widgetId = null;
+        const timer = setInterval(() => {
+            if (!window.turnstile) return;
+            clearInterval(timer);
+            widgetId = turnstile.render("#ap-captcha", { sitekey: SITEKEY, theme });
+        }, 200);
+
+        form.addEventListener("submit", async e => {
+            e.preventDefault();
+            const token = widgetId !== null ? turnstile.getResponse(widgetId) : "";
+            if (!token) { status.textContent = "pass the captcha first"; return; }
+            btn.disabled = true;
+            status.textContent = "sending...";
+            try {
+                const res = await fetch(API, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ ...Object.fromEntries(new FormData(form)), token }),
+                    signal: AbortSignal.timeout(10000)
+                });
+                if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.status);
+                form.reset();
+                status.textContent = "sent! i'll get back to you";
+            } catch (err) {
+                status.textContent = `failed: ${err.message}`;
+            } finally {
+                btn.disabled = false;
+                turnstile.reset(widgetId);
+            }
+        });
+    </script>
+</body>
+
+</html>

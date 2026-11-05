@@ -4,6 +4,7 @@
  * POST /       -> {nick, text, token} добавить сообщение
  * DELETE /<id> -> удалить (Authorization: Bearer ADMIN_TOKEN)
  * POST /letterbox -> {text, token} приватное сообщение владельцу в Telegram (не хранится)
+ * POST /apply   -> {nick, age, source, ideas, tg, token} анкета seven-eleven в Telegram (не хранится)
  * POST /hit      -> учесть визит (хеш IP, раз в сутки на посетителя) и вернуть статистику {today, unique, views}
  * POST /tg       -> вебхук Telegram: нажатие кнопки «delete» в уведомлении (только от TG_CHAT_ID)
  * POST /tg-setup -> регистрирует вебхук в Telegram (Authorization: Bearer ADMIN_TOKEN), вызвать один раз после деплоя
@@ -33,6 +34,18 @@ const tg = (env, method, body) => fetch(`https://api.telegram.org/bot${env.TG_BO
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body)
 });
+
+async function captchaOk(request, env, token) {
+    const check = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+        method: "POST",
+        body: new URLSearchParams({
+            secret: env.TURNSTILE_SECRET,
+            response: String(token || ""),
+            remoteip: request.headers.get("CF-Connecting-IP") || ""
+        })
+    });
+    return (await check.json()).success;
+}
 
 export default {
     async fetch(request, env, ctx) {
@@ -100,6 +113,25 @@ export default {
             return reply({ today: stats.today, unique: stats.unique_total, views: stats.views });
         }
 
+        if (request.method === "POST" && pathname === "/apply") {
+            if (!env.TURNSTILE_SECRET || !env.TG_BOT_TOKEN || !env.TG_CHAT_ID) return reply({ error: "not configured" }, 500);
+            let data;
+            try { data = await request.json(); } catch { return reply({ error: "bad json" }, 400); }
+            const str = k => (typeof data[k] === "string" ? data[k].trim() : "");
+            const { nick, source, ideas } = { nick: str("nick"), source: str("source"), ideas: str("ideas") };
+            const age = Number(data.age);
+            if (!/^[A-Za-z0-9_]{3,16}$/.test(nick) || !Number.isInteger(age) || age < 6 || age > 99
+                || !source || source.length > 300 || !ideas || ideas.length > MAX_LETTER
+                || !["yes", "no"].includes(data.tg)) return reply({ error: "bad form" }, 400);
+            if (!(await captchaOk(request, env, data.token))) return reply({ error: "captcha failed" }, 403);
+
+            const sent = await tg(env, "sendMessage", {
+                chat_id: env.TG_CHAT_ID,
+                text: `📝 seven-eleven application\n\nnick: ${nick}\nage: ${age}\nfrom: ${source}\nideas: ${ideas}\ntelegram group: ${data.tg}`
+            });
+            return sent.ok ? reply({ ok: true }, 201) : reply({ error: "delivery failed" }, 502);
+        }
+
         if (request.method === "POST" && pathname === "/letterbox") {
             if (!env.TURNSTILE_SECRET || !env.TG_BOT_TOKEN || !env.TG_CHAT_ID) return reply({ error: "not configured" }, 500);
             let data;
@@ -107,15 +139,7 @@ export default {
             const text = typeof data.text === "string" ? data.text.trim() : "";
             if (!text || text.length > MAX_LETTER) return reply({ error: "bad text" }, 400);
 
-            const check = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-                method: "POST",
-                body: new URLSearchParams({
-                    secret: env.TURNSTILE_SECRET,
-                    response: String(data.token || ""),
-                    remoteip: request.headers.get("CF-Connecting-IP") || ""
-                })
-            });
-            if (!(await check.json()).success) return reply({ error: "captcha failed" }, 403);
+            if (!(await captchaOk(request, env, data.token))) return reply({ error: "captcha failed" }, 403);
 
             // Ждём ответа Telegram: письмо нигде не хранится, потерять его молча нельзя
             const sent = await tg(env, "sendMessage", { chat_id: env.TG_CHAT_ID, text: `💌 letterbox\n\n${text}` });
