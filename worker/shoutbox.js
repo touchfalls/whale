@@ -125,9 +125,12 @@ export default {
                 || !["yes", "no"].includes(data.tg)) return reply({ error: "bad form" }, 400);
             if (!(await captchaOk(request, env, data.token))) return reply({ error: "captcha failed" }, 403);
 
+            // HTML-режим нужен ради <code> (копирование ника по тапу), поэтому экранируем всё, что ввёл посетитель
+            const e = t => String(t).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
             const sent = await tg(env, "sendMessage", {
                 chat_id: env.TG_CHAT_ID,
-                text: `📝 seven-eleven application\n\n🎮 nick: ${nick}\n🎂 age: ${age}\n💬 contact: ${contact}\n🔎 from: ${source}\n💡 ideas: ${ideas}\n${data.tg === "yes" ? "✅" : "❌"} telegram group: ${data.tg}`
+                parse_mode: "HTML",
+                text: `📝 seven-eleven application\n\n🎮 nick: <code>${nick}</code>\n🎂 age: ${age}\n💬 contact: ${e(contact)}\n🔎 from: ${e(source)}\n💡 ideas: ${e(ideas)}\n${data.tg === "yes" ? "✅" : "❌"} telegram group: ${data.tg}`
             });
             return sent.ok ? reply({ ok: true }, 201) : reply({ error: "delivery failed" }, 502);
         }
