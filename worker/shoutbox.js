@@ -127,7 +127,7 @@ export default {
 
             const sent = await tg(env, "sendMessage", {
                 chat_id: env.TG_CHAT_ID,
-                text: `📝 seven-eleven application\n\nnick: ${nick}\nage: ${age}\ncontact: ${contact}\nfrom: ${source}\nideas: ${ideas}\ntelegram group: ${data.tg}`
+                text: `📝 seven-eleven application\n\n🎮 nick: ${nick}\n🎂 age: ${age}\n💬 contact: ${contact}\n🔎 from: ${source}\n💡 ideas: ${ideas}\n${data.tg === "yes" ? "✅" : "❌"} telegram group: ${data.tg}`
             });
             return sent.ok ? reply({ ok: true }, 201) : reply({ error: "delivery failed" }, 502);
         }
