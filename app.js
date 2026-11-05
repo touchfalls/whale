@@ -297,9 +297,10 @@ async function renderMcHistory() {
         const rows = await res.json();
         if (rows.length < 2) return; // пока мало точек, график не рисуем
 
-        const W = 240, H = 40, now = Date.now() / 1000;
+        const W = 240, H = 64, now = Date.now() / 1000;
+        const t0 = rows[0].ts; // ось X = реальный охват данных, а не всегда 24 ч (иначе при малой истории — «палка» справа)
         const max = Math.max(1, ...rows.map(r => r.players));
-        const x = ts => ((ts - (now - 86400)) / 86400) * W;
+        const x = ts => ((ts - t0) / Math.max(now - t0, 1)) * W;
         const y = n => H - 4 - (n / max) * (H - 8);
         const ns = "http://www.w3.org/2000/svg";
         const svg = document.createElementNS(ns, "svg");
@@ -310,6 +311,13 @@ async function renderMcHistory() {
         const line = document.createElementNS(ns, "polyline");
         line.setAttribute("points", rows.filter(r => r.online).map(r => `${x(r.ts).toFixed(1)},${y(r.players).toFixed(1)}`).join(" "));
         line.setAttribute("class", "mc-spark-line");
+        const pts = rows.filter(r => r.online).map(r => [x(r.ts), y(r.players)]);
+        if (pts.length) {
+            const area = document.createElementNS(ns, "polygon");
+            area.setAttribute("points", [[pts[0][0], H - 4], ...pts, [pts.at(-1)[0], H - 4]].map(p => p.map(v => v.toFixed(1)).join(",")).join(" "));
+            area.setAttribute("class", "mc-spark-area");
+            svg.append(area);
+        }
         svg.append(line);
 
         rows.filter(r => !r.online).forEach(r => {
