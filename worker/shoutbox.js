@@ -55,8 +55,10 @@ const STATUS_MARK = { ok: "\n\n✅ accepted", no: "\n\n❌ rejected" };
 
 // HTML-режим нужен ради <code> (копирование ника по тапу), поэтому экранируем всё, что ввёл посетитель
 const appText = (a, mark = "") =>
-    `📝 seven-eleven application #${a.id}\n\n🎮 nick: <code>${a.nick}</code>\n🎂 age: ${a.age}\n💬 contact: ${escHtml(a.contact)}\n` +
-    `🔎 from: ${escHtml(a.source)}\n💡 ideas: ${escHtml(a.ideas)}\n${a.tg ? "✅" : "❌"} telegram group: ${a.tg ? "yes" : "no"}${mark}`;
+    // Необязательные поля (age=0, пустые source/ideas, tg=0) не выводим
+    [`📝 seven-eleven application #${a.id}\n`, `🎮 nick: <code>${a.nick}</code>`, a.age && `🎂 age: ${a.age}`,
+        `💬 contact: ${escHtml(a.contact)}`, a.source && `🔎 from: ${escHtml(a.source)}`,
+        a.ideas && `💡 ideas: ${escHtml(a.ideas)}`, a.tg && "✅ telegram group: yes"].filter(Boolean).join("\n") + mark;
 
 export default {
     // Cron: раз в 10 минут записываем онлайн сервера для графика на главной
@@ -170,10 +172,11 @@ export default {
             try { data = await request.json(); } catch { return reply({ error: "bad json" }, 400); }
             const str = k => (typeof data[k] === "string" ? data[k].trim() : "");
             const { nick, source, ideas, contact } = { nick: str("nick"), source: str("source"), ideas: str("ideas"), contact: str("contact") };
-            const age = Number(data.age);
-            if (!/^[A-Za-z0-9_]{3,16}$/.test(nick) || !Number.isInteger(age) || age < 6 || age > 99
-                || !contact || contact.length > 100 || !source || source.length > 300 || !ideas || ideas.length > MAX_LETTER
-                || !["yes", "no"].includes(data.tg)) return reply({ error: "bad form" }, 400);
+            // Обязательны только ник и контакт; age=0 значит «не указан»
+            const age = data.age === undefined || data.age === "" ? 0 : Number(data.age);
+            if (!/^[A-Za-z0-9_]{3,16}$/.test(nick) || !Number.isInteger(age) || (age !== 0 && (age < 6 || age > 99))
+                || !contact || contact.length > 100 || source.length > 300 || ideas.length > MAX_LETTER
+                || (data.tg !== undefined && !["yes", "no"].includes(data.tg))) return reply({ error: "bad form" }, 400);
             if (!(await captchaOk(request, env, data.token))) return reply({ error: "captcha failed" }, 403);
 
             const ipHash = await sha256((request.headers.get("CF-Connecting-IP") || "") + env.TURNSTILE_SECRET);
