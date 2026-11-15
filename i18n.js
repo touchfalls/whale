@@ -21,7 +21,7 @@ const I18N = {
         pick: "PICK ANOTHER FILM", diaryEmpty: "[diary is empty]", diaryErr: "[error loading diary from letterboxd]",
         updated: "updated", commit: "commit", source: "source", visitors: "visitors", views: "views", visitorsVal: "{a} today · {b} total",
         count: "nick {a}/{b} · message {c}/{d}", unavailable: "[unavailable]", captcha: "pass the captcha first", failed: "failed", sentOk: "sent ✓",
-        copied: "copied ✓", history: "last 24h"
+        copied: "copied ✓", history: "last 24h", ghProjects: "github projects", loadingGh: "[loading repositories...]", ghErr: "[error loading repositories from github]", sortRecent: "recent", sortPopular: "popular", sortCommits: "commits", commitsN: "{n} commits"
     },
     ru: {
         server: "сервер", srvDesc: "приватный майнкрафт-сервер для друзей и друзей их друзей", status: "статус",
@@ -44,7 +44,7 @@ const I18N = {
         pick: "ДРУГОЙ ФИЛЬМ", diaryEmpty: "[дневник пуст]", diaryErr: "[ошибка загрузки дневника с letterboxd]",
         updated: "обновлено", commit: "коммит", source: "исходники", visitors: "посетители", views: "просмотры", visitorsVal: "{a} сегодня · {b} всего",
         count: "ник {a}/{b} · сообщение {c}/{d}", unavailable: "[недоступно]", captcha: "сначала пройди капчу", failed: "ошибка", sentOk: "отправлено ✓",
-        copied: "скопировано ✓", history: "последние 24 ч"
+        copied: "скопировано ✓", history: "последние 24 ч", ghProjects: "проекты на github", loadingGh: "[загрузка репозиториев...]", ghErr: "[ошибка загрузки репозиториев с github]", sortRecent: "недавние", sortPopular: "популярные", sortCommits: "коммиты", commitsN: "коммитов: {n}"
     },
     it: {
         server: "server", srvDesc: "server minecraft privato per amici e amici dei loro amici", status: "stato",
@@ -67,7 +67,7 @@ const I18N = {
         pick: "SCEGLI UN ALTRO FILM", diaryEmpty: "[il diario è vuoto]", diaryErr: "[errore nel caricamento del diario da letterboxd]",
         updated: "aggiornato", commit: "commit", source: "sorgente", visitors: "visitatori", views: "visualizzazioni", visitorsVal: "{a} oggi · {b} in totale",
         count: "nick {a}/{b} · messaggio {c}/{d}", unavailable: "[non disponibile]", captcha: "prima risolvi il captcha", failed: "errore", sentOk: "inviato ✓",
-        copied: "copiato ✓", history: "ultime 24 ore"
+        copied: "copiato ✓", history: "ultime 24 ore", ghProjects: "progetti github", loadingGh: "[caricamento repository...]", ghErr: "[errore nel caricamento dei repository da github]", sortRecent: "recenti", sortPopular: "popolari", sortCommits: "commit", commitsN: "{n} commit"
     },
     fr: {
         server: "serveur", srvDesc: "serveur minecraft privé pour les amis et les amis de leurs amis", status: "statut",
@@ -90,7 +90,7 @@ const I18N = {
         pick: "CHOISIR UN AUTRE FILM", diaryEmpty: "[le journal est vide]", diaryErr: "[erreur de chargement du journal depuis letterboxd]",
         updated: "mis à jour", commit: "commit", source: "source", visitors: "visiteurs", views: "vues", visitorsVal: "{a} aujourd'hui · {b} au total",
         count: "pseudo {a}/{b} · message {c}/{d}", unavailable: "[indisponible]", captcha: "résous d'abord le captcha", failed: "échec", sentOk: "envoyé ✓",
-        copied: "copié ✓", history: "dernières 24 h"
+        copied: "copié ✓", history: "dernières 24 h", ghProjects: "projets github", loadingGh: "[chargement des dépôts...]", ghErr: "[erreur de chargement des dépôts github]", sortRecent: "récents", sortPopular: "populaires", sortCommits: "commits", commitsN: "{n} commits"
     }
 };
 
