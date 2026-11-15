@@ -332,6 +332,11 @@ a.info-value:hover {
     margin-bottom: 10px;
 }
 
+.gh-sort .btn {
+    flex: 1;
+    width: auto;
+}
+
 .projects-container .state-indicator {
     grid-column: 1 / -1;
 }
