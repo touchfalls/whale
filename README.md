@@ -8,6 +8,7 @@
 - **[links]** — иконки в шапке: контакты и соцсети (Telegram, Letterboxd, Serializd, Email, YouTube, Boosty).
 - **[server]** — статус приватного Minecraft-сервера и заявка на вайтлист.
 - **[proj]** — моды и проекты с Modrinth со счётчиком загрузок.
+- **[github projects]** — публичные репозитории GitHub (`CONFIG.githubUser`, форки скрыты) с сортировкой: недавний коммит, популярность (звёзды), число коммитов. Данные кэшируются в `localStorage` на час из-за лимита GitHub API.
 - **[se's pack]** — модпак со ссылкой на Modrinth, конвертером `.mrpack → .zip` для ручной установки и лениво загружаемым changelog версий.
 - **[page info]** — дата последнего обновления сайта и последний коммит (GitHub API, репозиторий в `CONFIG.githubRepo`).
 - **[recently watched]** — последние фильмы из дневника Letterboxd с постером, оценкой и датой (RSS через тот же worker).

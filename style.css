@@ -325,6 +325,13 @@ a.info-value:hover {
     gap: 8px;
 }
 
+.gh-sort {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
 .projects-container .state-indicator {
     grid-column: 1 / -1;
 }

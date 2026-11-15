@@ -36,6 +36,9 @@ const CONFIG = {
     // Репозиторий сайта на GitHub для окна [page info]
     githubRepo: "touchfalls/whale",
 
+    // Чьи публичные репозитории показывать в окне [github projects] (форки скрыты)
+    githubUser: "touchfalls",
+
     // Список ссылок для окна [links]
     // КАК ДОБАВЛЯТЬ ИКОНКИ ПО ПУТИ К ФАЙЛУ:
     // Вы можете указать:
@@ -119,6 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     renderMcHistory();
     fetchMinecraftStatus();
     fetchModrinthProjects();
+    fetchGithubProjects();
     fetchRecentFilms();
     fetchPageInfo();
 
@@ -421,6 +425,105 @@ function formatDownloadsCount(count) {
         return (count / 1000).toFixed(1).replace(/\.0$/, "") + "k";
     }
     return count.toLocaleString();
+}
+
+/**
+ * ============================================================================
+ * ОКНО [github projects]: РЕПОЗИТОРИИ GITHUB С СОРТИРОВКОЙ
+ * ============================================================================
+ */
+const GH_CACHE_KEY = "gh-repos";
+const GH_CACHE_MS = 60 * 60 * 1000;
+
+const GH_SORTS = {
+    recent: (a, b) => b.pushed - a.pushed,
+    popular: (a, b) => b.stars - a.stars || b.forks - a.forks || b.pushed - a.pushed,
+    commits: (a, b) => b.commits - a.commits || b.pushed - a.pushed
+};
+
+// Число коммитов = номер последней страницы при per_page=1 (GitHub не отдаёт счётчик напрямую)
+async function fetchGithubCommitCount(fullName) {
+    const res = await fetch(`https://api.github.com/repos/${fullName}/commits?per_page=1`, withTimeout());
+    if (res.status === 409) return 0; // пустой репозиторий
+    if (!res.ok) throw new Error(`GitHub API responded with status ${res.status}`);
+    const last = (res.headers.get("Link") || "").match(/[?&]page=(\d+)>; rel="last"/);
+    return last ? Number(last[1]) : (await res.json()).length;
+}
+
+// shortcut: запросы идут из браузера (лимит GitHub 60/ч на IP) + кэш на час в localStorage; при упоре в лимит перенести в воркер shoutbox с Cache API
+async function loadGithubRepos() {
+    try {
+        const cached = JSON.parse(localStorage.getItem(GH_CACHE_KEY));
+        if (cached && cached.user === CONFIG.githubUser && Date.now() - cached.at < GH_CACHE_MS) return cached.repos;
+    } catch { /* нет кэша */ }
+
+    const res = await fetch(`https://api.github.com/users/${encodeURIComponent(CONFIG.githubUser)}/repos?per_page=100`, withTimeout());
+    if (!res.ok) throw new Error(`GitHub API responded with status ${res.status}`);
+    const own = (await res.json()).filter(r => !r.fork);
+    const counts = await runWithConcurrency(own.map(r => () => fetchGithubCommitCount(r.full_name)), 4);
+    const repos = own.map((r, i) => ({
+        name: r.name, url: r.html_url, desc: r.description, lang: r.language,
+        stars: r.stargazers_count, forks: r.forks_count, pushed: Date.parse(r.pushed_at), commits: counts[i]
+    }));
+
+    try { localStorage.setItem(GH_CACHE_KEY, JSON.stringify({ user: CONFIG.githubUser, at: Date.now(), repos })); } catch { /* ок */ }
+    return repos;
+}
+
+async function fetchGithubProjects() {
+    const container = document.getElementById("gh-container");
+    const sortBar = document.getElementById("gh-sort");
+    if (!container || !sortBar) return;
+
+    let repos;
+    try {
+        repos = await loadGithubRepos();
+    } catch (error) {
+        console.error("GitHub repos API error:", error);
+        container.innerHTML = `<div class="state-indicator state-error">${t("ghErr")}</div>`;
+        return;
+    }
+    if (!repos.length) {
+        container.innerHTML = `<div class="state-indicator">${t("noProjects", { u: CONFIG.githubUser })}</div>`;
+        return;
+    }
+
+    const render = sort => {
+        sortBar.querySelectorAll("[data-sort]").forEach(b => b.classList.toggle("btn--accent", b.dataset.sort === sort));
+        container.innerHTML = "";
+        [...repos].sort(GH_SORTS[sort]).forEach(repo => {
+            const card = document.createElement("a");
+            card.href = repo.url;
+            card.className = "project-item";
+            card.target = "_blank";
+            card.rel = "noopener noreferrer";
+            card.innerHTML = `
+                <div class="project-icon"><span class="project-fallback-icon"></span></div>
+                <div class="project-body">
+                    <div class="project-head">
+                        <span class="project-name"></span>
+                        <span class="project-downloads"></span>
+                    </div>
+                    <p class="project-summary"></p>
+                </div>
+            `;
+            card.querySelector(".project-fallback-icon").textContent = (repo.lang || repo.name).charAt(0).toUpperCase();
+            card.querySelector(".project-icon").title = repo.lang || "";
+            card.querySelector(".project-name").textContent = repo.name;
+            card.querySelector(".project-downloads").textContent =
+                sort === "popular" ? `★ ${repo.stars}` :
+                sort === "commits" ? t("commitsN", { n: repo.commits }) :
+                formatModrinthDate(repo.pushed);
+            card.querySelector(".project-summary").textContent = repo.desc || t("noDesc");
+            container.appendChild(card);
+        });
+    };
+
+    sortBar.addEventListener("click", e => {
+        const btn = e.target.closest("[data-sort]");
+        if (btn) render(btn.dataset.sort);
+    });
+    render("recent");
 }
 
 /**
