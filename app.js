@@ -432,7 +432,7 @@ function formatDownloadsCount(count) {
  * ОКНО [github projects]: РЕПОЗИТОРИИ GITHUB С СОРТИРОВКОЙ
  * ============================================================================
  */
-const GH_CACHE_KEY = "gh-repos";
+const GH_CACHE_KEY = "gh-repos-v2"; // v2: без репозитория сайта
 const GH_CACHE_MS = 60 * 60 * 1000;
 
 const GH_SORTS = {
@@ -459,7 +459,8 @@ async function loadGithubRepos() {
 
     const res = await fetch(`https://api.github.com/users/${encodeURIComponent(CONFIG.githubUser)}/repos?per_page=100`, withTimeout());
     if (!res.ok) throw new Error(`GitHub API responded with status ${res.status}`);
-    const own = (await res.json()).filter(r => !r.fork);
+    // Репозиторий сайта уже есть в [page info], поэтому здесь не дублируем
+    const own = (await res.json()).filter(r => !r.fork && r.full_name.toLowerCase() !== CONFIG.githubRepo.toLowerCase());
     const counts = await runWithConcurrency(own.map(r => () => fetchGithubCommitCount(r.full_name)), 4);
     const repos = own.map((r, i) => ({
         name: r.name, url: r.html_url, desc: r.description, lang: r.language,
