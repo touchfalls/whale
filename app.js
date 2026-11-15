@@ -463,7 +463,7 @@ async function loadGithubRepos() {
     const own = (await res.json()).filter(r => !r.fork && r.full_name.toLowerCase() !== CONFIG.githubRepo.toLowerCase());
     const counts = await runWithConcurrency(own.map(r => () => fetchGithubCommitCount(r.full_name)), 4);
     const repos = own.map((r, i) => ({
-        name: r.name, url: r.html_url, desc: r.description, lang: r.language,
+        name: r.name, url: r.html_url, desc: r.description,
         stars: r.stargazers_count, forks: r.forks_count, pushed: Date.parse(r.pushed_at), commits: counts[i]
     }));
 
@@ -499,7 +499,6 @@ async function fetchGithubProjects() {
             card.target = "_blank";
             card.rel = "noopener noreferrer";
             card.innerHTML = `
-                <div class="project-icon"><span class="project-fallback-icon"></span></div>
                 <div class="project-body">
                     <div class="project-head">
                         <span class="project-name"></span>
@@ -508,8 +507,6 @@ async function fetchGithubProjects() {
                     <p class="project-summary"></p>
                 </div>
             `;
-            card.querySelector(".project-fallback-icon").textContent = (repo.lang || repo.name).charAt(0).toUpperCase();
-            card.querySelector(".project-icon").title = repo.lang || "";
             card.querySelector(".project-name").textContent = repo.name;
             card.querySelector(".project-downloads").textContent =
                 sort === "popular" ? `★ ${repo.stars}` :
